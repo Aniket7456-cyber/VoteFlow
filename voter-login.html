@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="other-dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Voter Login — VoteFlow</title>
+    <link rel="stylesheet" href="shared.css" />
+    <style>
+      .auth-wrap {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5.5rem 1.5rem 2rem;
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+      }
+      .auth-bg {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          ellipse 70% 50% at 50% 0%,
+          rgba(27, 94, 247, 0.12) 0%,
+          transparent 70%
+        );
+      }
+      .auth-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2.2rem;
+        width: 100%;
+        max-width: 440px;
+        position: relative;
+        z-index: 1;
+        animation: slideUp 0.5s ease both;
+        box-shadow: var(--shadow);
+      }
+      .code-input {
+        font-family: monospace;
+        font-size: 1.2rem;
+        text-align: center;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+      }
+      .code-hint {
+        background: var(--bg2);
+        border-radius: var(--radius);
+        padding: 0.9rem 1rem;
+        margin-bottom: 1.2rem;
+        font-size: 0.83rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toast-container"></div>
+    <nav class="nav">
+      <a href="index.html" class="nav-logo"
+        ><div class="nav-logo-badge">🗳️</div>
+        VoteFlow</a
+      >
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+        <div id="nav-guest-area" style="display: flex; gap: 0.6rem">
+          <a href="login.html" class="nav-btn nav-btn-ghost">Host Login</a
+          ><a href="register.html" class="nav-btn nav-btn-accent">Register</a>
+        </div>
+        <div id="nav-user-area" class="nav-user" style="display: none">
+          <div class="nav-avatar" id="nav-avatar-letter">U</div>
+          <span id="nav-username-display"></span
+          ><button class="nav-btn nav-btn-ghost btn-sm" onclick="logout()">
+            Logout
+          </button>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+      </div>
+    </nav>
+    <div class="auth-wrap">
+      <div class="auth-bg"></div>
+      <div class="auth-card">
+        <div style="text-align: center; margin-bottom: 1.2rem">
+          <span style="font-size: 2.5rem">🗳️</span>
+        </div>
+        <div
+          style="
+            font-family: var(--font-head);
+            font-size: 1.6rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 0.3rem;
+          "
+        >
+          Voter Login
+        </div>
+        <div
+          style="
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.88rem;
+            margin-bottom: 1.5rem;
+          "
+        >
+          Enter your invitation code to access your ballot
+        </div>
+        <div class="form-group">
+          <label class="form-label">Invitation Code</label>
+          <input
+            type="text"
+            class="form-input code-input"
+            id="voter-code"
+            placeholder="e.g. JOHN1234A"
+            oninput="this.value=this.value.toUpperCase()"
+            onkeydown="if(event.key==='Enter')voterLogin()"
+          />
+          <div class="field-msg" id="code-msg"></div>
+        </div>
+        <div class="code-hint">
+          <strong style="color: var(--text)">🔑 Your code is:</strong><br />
+          <span id="code-format-hint"
+            >Name (4 letters) + First 4 phone digits + Class</span
+          ><br />
+          <span style="font-size: 0.78rem; color: var(--muted)"
+            >Example: JOHN1234 or MAYA9876B</span
+          >
+        </div>
+        <button
+          class="btn btn-primary btn-full btn-lg"
+          id="voter-login-btn"
+          onclick="voterLogin()"
+        >
+          Enter Ballot →
+        </button>
+        <div class="divider-or"><span>or</span></div>
+        <a
+          href="login.html"
+          class="btn btn-outline btn-full"
+          style="justify-content: center"
+          >I'm an Election Host</a
+        >
+      </div>
+    </div>
+    <div id="page-footer-slot"></div>
+    <script src="shared.js"></script>
+    <script>
+      function voterLogin() {
+        const code = $("voter-code").value.trim().toUpperCase();
+        const msgEl = $("code-msg");
+        msgEl.textContent = "";
+        $("voter-code").classList.remove("err");
+        if (!code) {
+          msgEl.className = "field-msg err";
+          msgEl.textContent = "⚠ Please enter your invitation code";
+          return;
+        }
+        checkElectionTimers();
+        let foundVoter = null,
+          foundGroup = null;
+        for (const g of App.voterGroups) {
+          const v = g.voters.find((vt) => vt.code === code);
+          if (v) {
+            foundVoter = v;
+            foundGroup = g;
+            break;
+          }
+        }
+        if (!foundVoter) {
+          msgEl.className = "field-msg err";
+          msgEl.textContent =
+            "⚠ Invalid invitation code. Please check and try again.";
+          $("voter-code").classList.add("err");
+          return;
+        }
+        if (
+          foundVoter.voted ||
+          App.votes.find((v) => v.voterId === foundVoter.id)
+        ) {
+          msgEl.className = "field-msg err";
+          msgEl.textContent =
+            "🚫 This code has already been used. Each code works only once.";
+          $("voter-code").classList.add("err");
+          return;
+        }
+        let foundElection = null;
+        for (const e of App.elections) {
+          if (e.voterGroupId === foundGroup.id && e.status === "live") {
+            foundElection = e;
+            break;
+          }
+        }
+        if (!foundElection) {
+          msgEl.className = "field-msg err";
+          msgEl.textContent =
+            "⚠ No active election found for your code. The election may not have started yet.";
+          return;
+        }
+        // Store voter session and redirect to ballot
+        sessionStorage.setItem(
+          "vf_voter",
+          JSON.stringify({
+            voter: foundVoter,
+            group: foundGroup,
+            election: foundElection,
+          })
+        );
+        showToast(
+          `Welcome, ${foundVoter.name}! Loading your ballot...`,
+          "success",
+          2000
+        );
+        setTimeout(() => (window.location = "ballot.html"), 1000);
+      }
+      document.addEventListener("DOMContentLoaded", () => {
+        const cat = Store.get("category");
+        if (cat === "school")
+          $("code-format-hint").textContent =
+            "First 4 letters of name + First 4 phone digits + Class";
+        else
+          $("code-format-hint").textContent =
+            "First 4 letters of name + First 4 phone digits";
+        injectFeedbackAndFooter("voter-login");
+      });
+    </script>
+  </body>
+</html>

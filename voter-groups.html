@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="other-dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Voter Groups — VoteFlow</title>
+    <link rel="stylesheet" href="shared.css" />
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+      .voter-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.88rem;
+      }
+      .voter-table th {
+        text-align: left;
+        padding: 0.7rem 1rem;
+        background: var(--bg3);
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      .voter-table th:first-child {
+        border-radius: var(--radius) 0 0 var(--radius);
+      }
+      .voter-table th:last-child {
+        border-radius: 0 var(--radius) var(--radius) 0;
+      }
+      .voter-table td {
+        padding: 0.7rem 1rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--text);
+      }
+      .voter-table tr:last-child td {
+        border-bottom: none;
+      }
+      .voter-table tr:hover td {
+        background: var(--bg3);
+      }
+      .inv-code {
+        font-family: monospace;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 1px;
+        background: var(--bg3);
+        padding: 0.2rem 0.5rem;
+        border-radius: 5px;
+      }
+      .import-steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      .import-step {
+        background: var(--bg2);
+        border-radius: var(--radius);
+        padding: 1rem;
+        text-align: center;
+      }
+      .import-step-num {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+      }
+      .import-step p {
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+      .parsed-preview {
+        background: var(--bg2);
+        border-radius: var(--radius);
+        padding: 1rem;
+        margin-top: 1rem;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      .parsed-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1.2fr;
+        gap: 0.5rem;
+        padding: 0.4rem 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.82rem;
+      }
+      .parsed-row:last-child {
+        border-bottom: none;
+      }
+      .parsed-head {
+        font-weight: 700;
+        color: var(--muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .group-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.22s;
+      }
+      .group-card:hover {
+        border-color: var(--primary);
+        transform: translateX(3px);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toast-container"></div>
+    <nav class="nav">
+      <a href="index.html" class="nav-logo"
+        ><div class="nav-logo-badge">🗳️</div>
+        VoteFlow</a
+      >
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="dashboard.html" data-auth>Dashboard</a></li>
+        <li>
+          <a href="voter-groups.html" class="active" data-auth>Voter Groups</a>
+        </li>
+        <li><a href="history.html" data-auth>History</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+        <div id="nav-guest-area" style="display: none"></div>
+        <div id="nav-user-area" class="nav-user" style="display: none">
+          <div class="nav-avatar" id="nav-avatar-letter">U</div>
+          <span id="nav-username-display"></span>
+          <button class="nav-btn nav-btn-ghost btn-sm" onclick="logout()">
+            Logout
+          </button>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+      </div>
+    </nav>
+
+    <div class="page-wrap">
+      <div class="main-content">
+        <div id="view-groups">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              flex-wrap: wrap;
+              gap: 1rem;
+              margin-bottom: 2rem;
+            "
+          >
+            <div>
+              <div class="section-title">Voter Groups</div>
+              <div style="color: var(--muted); font-size: 0.9rem">
+                Organise voters and auto-generate invitation codes
+              </div>
+            </div>
+            <button
+              class="btn btn-primary"
+              onclick="openModal('modal-new-group')"
+            >
+              + Create Group
+            </button>
+          </div>
+          <div id="groups-container"></div>
+        </div>
+
+        <div id="view-detail" style="display: none">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              flex-wrap: wrap;
+              gap: 1rem;
+              margin-bottom: 1.5rem;
+            "
+          >
+            <div>
+              <div class="section-title" id="detail-title"></div>
+              <div
+                style="
+                  display: flex;
+                  gap: 0.5rem;
+                  flex-wrap: wrap;
+                  margin-top: 0.4rem;
+                "
+                id="detail-badges"
+              ></div>
+            </div>
+            <div style="display: flex; gap: 0.6rem; flex-wrap: wrap">
+              <button class="btn btn-ghost" onclick="backToGroups()">
+                ← Back
+              </button>
+              <button
+                class="btn btn-primary"
+                onclick="openModal('modal-add-voter')"
+              >
+                + Add Voter
+              </button>
+              <button class="btn btn-ghost" onclick="exportVoterCodes()">
+                ⬇ Export Codes
+              </button>
+            </div>
+          </div>
+          <div class="card" style="overflow-x: auto">
+            <table class="voter-table" id="voter-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Phone</th>
+                  <th id="class-th" style="display: none">Class</th>
+                  <th>Invitation Code</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="voter-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-new-group">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">Create Voter Group</div>
+          <button class="modal-close" onclick="closeModal('modal-new-group')">
+            ✕
+          </button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Group Name</label>
+          <input
+            type="text"
+            class="form-input"
+            id="ng-name"
+            placeholder="e.g. Class 10-A, Engineering Dept..."
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Group Type</label>
+          <select class="form-input" id="ng-type" onchange="toggleClassField()">
+            <option value="school">
+              🏫 School / University (includes Class field)
+            </option>
+            <option value="other">🏢 Organization / Other</option>
+          </select>
+        </div>
+
+        <div class="divider"></div>
+
+        <div
+          style="font-weight: 700; margin-bottom: 0.8rem; font-size: 0.92rem"
+        >
+          📤 Bulk Import Voters
+        </div>
+        <div class="import-steps">
+          <div class="import-step">
+            <div class="import-step-num">1</div>
+            <strong style="font-size: 0.85rem">Upload File</strong>
+            <p>Excel (.xlsx/.csv) or PDF with voter list</p>
+          </div>
+          <div class="import-step">
+            <div class="import-step-num">2</div>
+            <strong style="font-size: 0.85rem">Auto Extract</strong>
+            <p>Name, phone, class pulled automatically</p>
+          </div>
+          <div class="import-step">
+            <div class="import-step-num">3</div>
+            <strong style="font-size: 0.85rem">Codes Generated</strong>
+            <p>Unique invitation codes created instantly</p>
+          </div>
+        </div>
+        <div
+          class="upload-zone"
+          id="upload-zone"
+          onclick="$('file-input').click()"
+          ondrop="handleDrop(event)"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+        >
+          <div class="upload-icon">📁</div>
+          <div style="font-weight: 700; margin-bottom: 0.3rem">
+            Click or drag file here
+          </div>
+          <div style="font-size: 0.82rem; color: var(--muted)">
+            Supports .xlsx, .xls, .csv, .pdf
+          </div>
+          <div
+            style="font-size: 0.78rem; color: var(--muted); margin-top: 0.4rem"
+          >
+            Expected columns: <strong>Name</strong>, <strong>Phone</strong>,
+            <strong>Class</strong> (optional)
+          </div>
+          <input
+            type="file"
+            id="file-input"
+            style="display: none"
+            accept=".xlsx,.xls,.csv,.pdf"
+            onchange="handleFileUpload(this)"
+          />
+        </div>
+        <div id="import-preview" style="display: none; margin-top: 1rem">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 0.5rem;
+            "
+          >
+            <strong style="font-size: 0.88rem" id="preview-count"></strong>
+            <button class="btn btn-ghost btn-sm" onclick="clearImport()">
+              ✕ Clear
+            </button>
+          </div>
+          <div class="parsed-preview" id="preview-table"></div>
+        </div>
+        <div class="divider"></div>
+        <button
+          class="btn btn-primary btn-full"
+          onclick="createGroup()"
+          id="btn-create-group"
+        >
+          Create Group
+        </button>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-add-voter">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">Add Voter</div>
+          <button class="modal-close" onclick="closeModal('modal-add-voter')">
+            ✕
+          </button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input
+            type="text"
+            class="form-input"
+            id="av-name"
+            placeholder="Full name"
+            oninput="updateCodePreview()"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input
+            type="tel"
+            class="form-input"
+            id="av-phone"
+            placeholder="10-digit phone number"
+            oninput="updateCodePreview()"
+          />
+        </div>
+        <div class="form-group" id="av-class-wrap">
+          <label class="form-label">Class / Section</label>
+          <input
+            type="text"
+            class="form-input"
+            id="av-class"
+            placeholder="e.g. 10-A, 12-B"
+            oninput="updateCodePreview()"
+          />
+        </div>
+        <div
+          style="
+            background: var(--bg2);
+            border-radius: var(--radius);
+            padding: 0.9rem;
+            margin-bottom: 1.2rem;
+          "
+        >
+          <div
+            style="
+              font-size: 0.78rem;
+              color: var(--muted);
+              margin-bottom: 0.3rem;
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            "
+          >
+            Generated Invitation Code
+          </div>
+          <div
+            style="
+              font-family: monospace;
+              font-size: 1.3rem;
+              font-weight: 700;
+              color: var(--accent);
+              letter-spacing: 2px;
+            "
+            id="code-preview"
+          >
+            —
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="addVoterManual()">
+          Add Voter
+        </button>
+      </div>
+    </div>
+
+    <div id="page-footer-slot"></div>
+    <script src="shared.js"></script>
+    <script>
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+      let currentGroupId = null,
+        parsedVoters = [];
+
+      function renderGroups() {
+        const cont = $("groups-container");
+        const myGroups = App.voterGroups.filter(
+          (g) => g.userId === App.currentUser?.id
+        );
+        if (!myGroups.length) {
+          cont.innerHTML =
+            '<div class="empty-state"><span class="empty-icon">👥</span><h3>No voter groups yet</h3><p>Create a group to organise your voters</p></div>';
+          return;
+        }
+        cont.innerHTML = myGroups
+          .map(
+            (g) => `
+    <div class="group-card" onclick="openGroupDetail('${g.id}')">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem">
+        <div>
+          <div style="font-weight:700;font-size:1rem;margin-bottom:0.35rem">${esc(
+            g.name
+          )}</div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+            <span class="badge badge-primary">${g.voters.length} voters</span>
+            <span class="badge badge-muted">${
+              g.type === "school" ? "🏫 School" : "🏢 Organization"
+            }</span>
+            <span class="badge badge-success">${
+              g.voters.filter((v) => v.voted).length
+            } voted</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.5rem">
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openGroupDetail('${
+            g.id
+          }')">View →</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteGroup('${
+            g.id
+          }')">Delete</button>
+        </div>
+      </div>
+    </div>`
+          )
+          .join("");
+      }
+
+      function openGroupDetail(id) {
+        currentGroupId = id;
+        const g = App.voterGroups.find((x) => x.id === id);
+        if (!g) return;
+        $("view-groups").style.display = "none";
+        $("view-detail").style.display = "block";
+        $("detail-title").textContent = g.name;
+        $("detail-badges").innerHTML = `<span class="badge badge-primary">${
+          g.voters.length
+        } voters</span><span class="badge badge-muted">${
+          g.type === "school" ? "🏫 School" : "🏢 Org"
+        }</span><span class="badge badge-success">${
+          g.voters.filter((v) => v.voted).length
+        } voted</span>`;
+        $("class-th").style.display = g.type === "school" ? "" : "none";
+        renderVoterTable(g);
+      }
+      function backToGroups() {
+        $("view-groups").style.display = "block";
+        $("view-detail").style.display = "none";
+        currentGroupId = null;
+      }
+      function renderVoterTable(g) {
+        const tbody = $("voter-tbody");
+        if (!g.voters.length) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem">No voters yet — add manually or import a file</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = g.voters
+          .map(
+            (v, i) => `
+    <tr>
+      <td>${i + 1}</td><td><strong>${esc(v.name)}</strong></td><td>${esc(
+              v.phone
+            )}</td>
+      ${g.type === "school" ? `<td>${esc(v.class || "—")}</td>` : ""}
+      <td><span class="inv-code">${esc(v.code)}</span></td>
+      <td><span class="badge ${v.voted ? "badge-success" : "badge-muted"}">${
+              v.voted ? "✓ Voted" : "Pending"
+            }</span></td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeVoter('${
+        g.id
+      }','${v.id}')">✕</button></td>
+    </tr>`
+          )
+          .join("");
+      }
+      function removeVoter(gid, vid) {
+        if (!confirm("Remove this voter?")) return;
+        const g = App.voterGroups.find((x) => x.id === gid);
+        if (!g) return;
+        g.voters = g.voters.filter((v) => v.id !== vid);
+        Store.save({ voterGroups: App.voterGroups });
+        renderVoterTable(g);
+        showToast("Voter removed", "info");
+      }
+      function deleteGroup(id) {
+        const g = App.voterGroups.find((x) => x.id === id);
+        if (!confirm(`Delete group "${g?.name}"?`)) return;
+        App.voterGroups = App.voterGroups.filter((x) => x.id !== id);
+        Store.save({ voterGroups: App.voterGroups });
+        renderGroups();
+        showToast("Group deleted", "info");
+      }
+
+      function handleDrop(e) {
+        e.preventDefault();
+        $("upload-zone").classList.remove("drag-over");
+        const f = e.dataTransfer.files[0];
+        if (f) processFile(f);
+      }
+      function handleFileUpload(input) {
+        if (input.files[0]) processFile(input.files[0]);
+      }
+      function processFile(file) {
+        const ext = file.name.split(".").pop().toLowerCase();
+        if (["xlsx", "xls", "csv"].includes(ext)) parseExcel(file);
+        else if (ext === "pdf") parsePDF(file);
+        else
+          showToast("Unsupported file type. Use .xlsx, .csv or .pdf", "error");
+      }
+
+      function parseExcel(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const wb = XLSX.read(e.target.result, { type: "array" });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(ws, {
+              header: 1,
+              defval: "",
+            });
+            if (rows.length < 2) {
+              showToast("File has no data rows", "error");
+              return;
+            }
+            // Auto-detect header row
+            const headers = rows[0].map((h) => String(h).toLowerCase().trim());
+            const nameIdx = headers.findIndex((h) => h.includes("name"));
+            const phoneIdx = headers.findIndex(
+              (h) =>
+                h.includes("phone") ||
+                h.includes("mobile") ||
+                h.includes("contact")
+            );
+            const classIdx = headers.findIndex(
+              (h) =>
+                h.includes("class") ||
+                h.includes("roll") ||
+                h.includes("section") ||
+                h.includes("grade")
+            );
+            if (nameIdx === -1 || phoneIdx === -1) {
+              showToast(
+                "Could not find Name and Phone columns. Check your headers.",
+                "error"
+              );
+              return;
+            }
+            const voters = rows
+              .slice(1)
+              .filter((r) => r[nameIdx] && r[phoneIdx])
+              .map((r) => ({
+                name: String(r[nameIdx]).trim(),
+                phone: String(r[phoneIdx]).replace(/\D/g, ""),
+                class: classIdx > -1 ? String(r[classIdx] || "").trim() : "",
+              }))
+              .filter((v) => v.name && v.phone.length >= 4);
+            if (!voters.length) {
+              showToast("No valid rows found", "error");
+              return;
+            }
+            parsedVoters = voters;
+            showPreview(voters);
+            showToast(
+              `✅ ${voters.length} voters extracted from Excel`,
+              "success"
+            );
+          } catch (err) {
+            showToast("Error reading file: " + err.message, "error");
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
+      async function parsePDF(file) {
+        showToast("Parsing PDF...", "info", 2000);
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          let fullText = "";
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            fullText += content.items.map((item) => item.str).join(" ") + "\n";
+          }
+          // Try to extract structured rows: lines that have a name-like string and a 10-digit phone
+          const lines = fullText
+            .split("\n")
+            .map((l) => l.trim())
+            .filter(Boolean);
+          const voters = [];
+          const phoneRx = /\b\d{10}\b/;
+          const classRx =
+            /\b([0-9]{1,2}[-\/][A-Za-z]|[A-Za-z]{1,3}\s*\d{1,2})\b/i;
+          lines.forEach((line) => {
+            const phoneMatch = line.match(phoneRx);
+            if (!phoneMatch) return;
+            const phone = phoneMatch[0];
+            const withoutPhone = line.replace(phone, "").trim();
+            const classMatch = withoutPhone.match(classRx);
+            const cls = classMatch ? classMatch[0] : "";
+            const name = withoutPhone
+              .replace(cls, "")
+              .replace(/[^a-zA-Z\s]/g, "")
+              .trim();
+            if (name.length > 1) voters.push({ name, phone, class: cls });
+          });
+          if (!voters.length) {
+            showToast(
+              "Could not extract data from PDF. Try Excel instead.",
+              "warn",
+              5000
+            );
+            return;
+          }
+          parsedVoters = voters;
+          showPreview(voters);
+          showToast(`✅ ${voters.length} voters extracted from PDF`, "success");
+        } catch (err) {
+          showToast("PDF parse error: " + err.message, "error");
+        }
+      }
+
+      function showPreview(voters) {
+        $("import-preview").style.display = "block";
+        $(
+          "preview-count"
+        ).textContent = `${voters.length} voters ready to import`;
+        const isSchool = $("ng-type").value === "school";
+        $("preview-table").innerHTML =
+          `
+    <div class="parsed-row parsed-head"><span>Name</span><span>Phone</span>${
+      isSchool ? "<span>Class</span>" : "<span></span>"
+    }<span>Code</span></div>` +
+          voters
+            .slice(0, 10)
+            .map((v) => {
+              const code = generateCode(
+                v.name,
+                v.phone,
+                v.class,
+                $("ng-type").value === "school"
+              );
+              return `<div class="parsed-row"><span>${esc(
+                v.name
+              )}</span><span>${esc(v.phone)}</span>${
+                isSchool
+                  ? `<span>${esc(v.class || "—")}</span>`
+                  : "<span></span>"
+              }<span style="font-family:monospace;color:var(--accent);font-weight:700">${code}</span></div>`;
+            })
+            .join("") +
+          (voters.length > 10
+            ? `<div style="text-align:center;font-size:0.8rem;color:var(--muted);padding:0.5rem">... and ${
+                voters.length - 10
+              } more</div>`
+            : "");
+      }
+      function clearImport() {
+        parsedVoters = [];
+        $("import-preview").style.display = "none";
+        $("file-input").value = "";
+      }
+      function toggleClassField() {
+        const s = $("ng-type").value === "school";
+        if (parsedVoters.length) showPreview(parsedVoters);
+      }
+
+      function createGroup() {
+        const name = $("ng-name").value.trim();
+        if (!name) {
+          showToast("Group name required", "error");
+          return;
+        }
+        const type = $("ng-type").value;
+        const isSchool = type === "school";
+        const group = {
+          id: "grp-" + Date.now(),
+          userId: App.currentUser.id,
+          name,
+          type,
+          voters: [],
+          createdAt: new Date().toISOString(),
+        };
+
+        parsedVoters.forEach((v) => {
+          const code = generateCode(v.name, v.phone, v.class, isSchool);
+          if (!group.voters.find((x) => x.code === code)) {
+            group.voters.push({
+              id: "voter-" + Date.now() + Math.random(),
+              name: v.name,
+              phone: v.phone,
+              class: v.class || "",
+              code,
+              voted: false,
+              addedAt: new Date().toISOString(),
+            });
+          }
+        });
+        App.voterGroups.push(group);
+        Store.save({ voterGroups: App.voterGroups });
+        closeModal("modal-new-group");
+        parsedVoters = [];
+        $("ng-name").value = "";
+        $("import-preview").style.display = "none";
+        renderGroups();
+        showToast(
+          `Group "${name}" created with ${group.voters.length} voters!`,
+          "success",
+          5000
+        );
+      }
+
+      function updateCodePreview() {
+        const name = $("av-name").value.trim(),
+          phone = $("av-phone").value.trim(),
+          cls = $("av-class").value.trim();
+        const g = App.voterGroups.find((x) => x.id === currentGroupId);
+        const code = generateCode(name, phone, cls, g?.type === "school");
+        $("code-preview").textContent = code || "—";
+      }
+      function addVoterManual() {
+        const name = $("av-name").value.trim(),
+          phone = $("av-phone").value.trim(),
+          cls = $("av-class").value.trim();
+        if (!name) {
+          showToast("Name required", "error");
+          return;
+        }
+        if (phone.replace(/\D/g, "").length < 4) {
+          showToast("Valid phone number required", "error");
+          return;
+        }
+        const g = App.voterGroups.find((x) => x.id === currentGroupId);
+        if (!g) return;
+        const code = generateCode(name, phone, cls, g.type === "school");
+        if (g.voters.find((v) => v.code === code)) {
+          showToast("Voter with this code already exists", "warn");
+          return;
+        }
+        g.voters.push({
+          id: "voter-" + Date.now(),
+          name,
+          phone,
+          class: cls,
+          code,
+          voted: false,
+          addedAt: new Date().toISOString(),
+        });
+        Store.save({ voterGroups: App.voterGroups });
+        closeModal("modal-add-voter");
+        renderVoterTable(g);
+        $(
+          "detail-badges"
+        ).innerHTML = `<span class="badge badge-primary">${g.voters.length} voters</span>`;
+        showToast(`Voter added! Code: ${code}`, "success", 5000);
+      }
+
+      function exportVoterCodes() {
+        const g = App.voterGroups.find((x) => x.id === currentGroupId);
+        if (!g || !g.voters.length) return;
+        const lines = [`VoteFlow Voter Codes — ${g.name}`, "=".repeat(50), ""];
+        if (g.type === "school")
+          lines.push(
+            "Name".padEnd(25) + "Phone".padEnd(15) + "Class".padEnd(10) + "Code"
+          );
+        else lines.push("Name".padEnd(25) + "Phone".padEnd(15) + "Code");
+        lines.push("-".repeat(50));
+        g.voters.forEach((v) => {
+          if (g.type === "school")
+            lines.push(
+              v.name.padEnd(25) +
+                v.phone.padEnd(15) +
+                (v.class || "").padEnd(10) +
+                v.code
+            );
+          else lines.push(v.name.padEnd(25) + v.phone.padEnd(15) + v.code);
+        });
+        lines.push(
+          "",
+          "Developed by Aniket Shrivastava | workwithaniket7456@gmail.com"
+        );
+        const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `VoteFlow_Codes_${g.name.replace(/\s+/g, "_")}.txt`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showToast("Voter codes exported!", "success");
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const user = requireAuth();
+        if (!user) return;
+        App.currentUser = user;
+        renderGroups();
+        injectFeedbackAndFooter("voter-groups");
+
+        $("ng-type").addEventListener("change", toggleClassField);
+      });
+    </script>
+  </body>
+</html>

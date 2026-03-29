@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="other-dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Your Ballot — VoteFlow</title>
+    <link rel="stylesheet" href="shared.css" />
+    <style>
+      .ballot-wrap {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 5.5rem 1.5rem 2rem;
+      }
+      .ballot-header {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 1.2rem;
+        text-align: center;
+      }
+
+      .stepper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+      }
+      .s-dot {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 2px solid var(--border);
+        background: var(--bg3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--muted);
+        transition: all 0.35s;
+        flex-shrink: 0;
+      }
+      .s-dot.current {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: #fff;
+        transform: scale(1.15);
+        box-shadow: 0 0 0 4px rgba(27, 94, 247, 0.2);
+      }
+      .s-dot.done {
+        border-color: var(--success);
+        background: var(--success);
+        color: #fff;
+      }
+      .s-line {
+        flex: 1;
+        height: 2px;
+        background: var(--border);
+        max-width: 36px;
+        transition: background 0.35s;
+      }
+      .s-line.done {
+        background: var(--success);
+      }
+
+      .c-option {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.1rem;
+        border-radius: var(--radius);
+        border: 2px solid var(--border);
+        background: var(--bg2);
+        cursor: pointer;
+        transition: all 0.22s;
+        margin-bottom: 0.7rem;
+        position: relative;
+        user-select: none;
+      }
+      .c-option:hover:not(.locked):not(.selected) {
+        border-color: var(--primary2);
+        background: var(--bg3);
+        transform: translateX(4px);
+      }
+      .c-option.selected {
+        border-color: var(--success);
+        background: var(--bg3);
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+        animation: popIn 0.25s ease;
+      }
+      .c-option.locked:not(.selected) {
+        opacity: 0.35;
+        cursor: not-allowed;
+        pointer-events: none;
+        filter: grayscale(0.5);
+      }
+      .c-photo {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: var(--bg3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        overflow: hidden;
+        border: 2px solid var(--border);
+        flex-shrink: 0;
+      }
+      .c-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .c-info {
+        flex: 1;
+      }
+      .c-name {
+        font-weight: 700;
+        font-size: 1rem;
+        margin-bottom: 0.15rem;
+      }
+      .c-party {
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+      .c-symbol {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: var(--bg3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        overflow: hidden;
+        border: 1px solid var(--border);
+      }
+      .c-symbol img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .mcq-radio {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid var(--border);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+      .c-option.selected .mcq-radio {
+        border-color: var(--success);
+        background: var(--success);
+      }
+      .c-option.selected .mcq-radio::after {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #fff;
+      }
+
+      .info-banner {
+        background: rgba(27, 94, 247, 0.1);
+        border: 1px solid rgba(27, 94, 247, 0.25);
+        border-radius: var(--radius);
+        padding: 0.7rem 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.82rem;
+        color: var(--primary2);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .sel-banner {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px dashed var(--success);
+        border-radius: var(--radius);
+        padding: 0.9rem 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.88rem;
+        color: var(--success);
+        display: none;
+        align-items: center;
+        gap: 0.6rem;
+      }
+
+      .done-screen {
+        text-align: center;
+        padding: 2.5rem 1rem;
+        animation: popIn 0.5s ease;
+      }
+      .done-icon {
+        font-size: 4rem;
+        animation: float 2s ease-in-out infinite;
+        display: block;
+        margin-bottom: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toast-container"></div>
+    <nav class="nav">
+      <a href="index.html" class="nav-logo"
+        ><div class="nav-logo-badge">🗳️</div>
+        VoteFlow</a
+      >
+      <div class="nav-right">
+        <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+      </div>
+    </nav>
+    <div class="ballot-wrap" id="ballot-root">
+      <div class="ballot-header">
+        <div style="font-size: 2rem; margin-bottom: 0.4rem">🗳️</div>
+        <div
+          style="
+            font-family: var(--font-head);
+            font-size: 1.35rem;
+            font-weight: 700;
+          "
+          id="b-title"
+        >
+          Election Ballot
+        </div>
+        <div
+          style="color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem"
+          id="b-voter"
+        >
+          Welcome, Voter
+        </div>
+        <div class="stepper" id="b-stepper" style="display: none"></div>
+        <div
+          style="font-size: 0.78rem; color: var(--muted); margin-top: 0.5rem"
+          id="b-step-label"
+        ></div>
+      </div>
+
+      <div id="b-post-area">
+        <div
+          style="
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.2rem 1.4rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+          "
+        >
+          <div class="s-dot current" id="b-post-num" style="flex-shrink: 0">
+            1
+          </div>
+          <div>
+            <div
+              style="
+                font-family: var(--font-head);
+                font-size: 1.05rem;
+                font-weight: 700;
+              "
+              id="b-post-title"
+            >
+              Post Title
+            </div>
+            <div style="font-size: 0.78rem; color: var(--muted)">
+              Select ONE candidate — your choice is final for this post
+            </div>
+          </div>
+        </div>
+        <div class="info-banner" id="b-info-banner">
+          <span>👆</span
+          ><span>Tap a candidate to vote. Others will lock immediately.</span>
+        </div>
+        <div class="sel-banner" id="b-sel-banner">
+          <span style="font-size: 1.2rem">✅</span>
+          <div>
+            Locked in: <strong id="b-sel-name"></strong> — cannot be changed.
+          </div>
+        </div>
+        <div id="b-candidates"></div>
+        <button
+          class="btn btn-primary btn-full btn-lg"
+          id="b-next-btn"
+          onclick="confirmVote()"
+          disabled
+          style="opacity: 0.4; cursor: not-allowed; margin-top: 0.5rem"
+        >
+          <span id="b-next-txt">Select a candidate to continue</span>
+        </button>
+        <p
+          style="
+            text-align: center;
+            font-size: 0.76rem;
+            color: var(--muted);
+            margin-top: 0.5rem;
+          "
+        >
+          ⚠ Once confirmed, you cannot return to this post
+        </p>
+      </div>
+
+      <div id="b-done" style="display: none" class="card done-screen">
+        <span class="done-icon">🏆</span>
+        <div
+          style="
+            font-family: var(--font-head);
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+          "
+        >
+          All Votes Cast!
+        </div>
+        <div
+          style="
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+          "
+        >
+          Your votes are recorded securely. Results will be shown when the
+          election ends.
+        </div>
+        <div
+          style="
+            background: var(--bg2);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1.2rem;
+          "
+          id="b-summary"
+        ></div>
+        <div style="font-size: 0.8rem; color: var(--muted)">
+          You may now close this window. Your invitation code cannot be reused.
+        </div>
+      </div>
+    </div>
+    <div id="page-footer-slot"></div>
+    <script src="shared.js"></script>
+    <script>
+      const B = {
+        election: null,
+        voter: null,
+        group: null,
+        postIdx: 0,
+        selections: {},
+        confirmed: {},
+      };
+
+      function loadBallot() {
+        const raw = sessionStorage.getItem("vf_voter");
+        if (!raw) {
+          showToast("Session expired. Please login again.", "error");
+          setTimeout(() => (window.location = "voter-login.html"), 2000);
+          return;
+        }
+        const { voter, group, election } = JSON.parse(raw);
+        B.voter = voter;
+        B.group = group;
+        B.election = election;
+
+        B.election =
+          App.elections.find((e) => e.id === election.id) || election;
+        $("b-title").textContent = B.election.title;
+        $("b-voter").textContent = `Welcome, ${voter.name}`;
+
+        const st = $("b-stepper");
+        if (B.election.posts.length > 1) {
+          st.style.display = "flex";
+          B.election.posts.forEach((p, i) => {
+            if (i > 0) {
+              const l = document.createElement("div");
+              l.className = "s-line";
+              l.id = "sl" + i;
+              st.appendChild(l);
+            }
+            const d = document.createElement("div");
+            d.className = "s-dot" + (i === 0 ? " current" : "");
+            d.id = "sd" + i;
+            d.textContent = i + 1;
+            d.title = p.name;
+            st.appendChild(d);
+          });
+        }
+        loadPost(0);
+      }
+
+      function loadPost(idx) {
+        B.postIdx = idx;
+        const post = B.election.posts[idx];
+
+        B.election.posts.forEach((_, i) => {
+          const d = $("sd" + i),
+            l = $("sl" + i);
+          if (!d) return;
+          d.classList.remove("current", "done");
+          if (i < idx) {
+            d.classList.add("done");
+            d.textContent = "✓";
+          } else if (i === idx) {
+            d.classList.add("current");
+            d.textContent = i + 1;
+          } else d.textContent = i + 1;
+          if (l) l.classList.toggle("done", i < idx);
+        });
+        $("b-step-label").textContent =
+          B.election.posts.length > 1
+            ? `Post ${idx + 1} of ${B.election.posts.length}: ${post.name}`
+            : "";
+        $("b-post-num").textContent = idx + 1;
+        $("b-post-title").textContent = post.name;
+        $("b-info-banner").style.display = "flex";
+        $("b-sel-banner").style.display = "none";
+        const btn = $("b-next-btn");
+        btn.disabled = true;
+        btn.style.opacity = "0.4";
+        btn.style.cursor = "not-allowed";
+        const isLast = idx === B.election.posts.length - 1;
+        $("b-next-txt").textContent = isLast
+          ? "Select a candidate to submit final vote"
+          : "Select a candidate to continue";
+
+        $("b-candidates").innerHTML = post.candidates
+          .map(
+            (c) => `
+    <div class="c-option" id="co-${post.id}-${c.id}" onclick="pickCandidate('${
+              post.id
+            }','${c.id}')">
+      <div class="c-photo">${
+        c.photo ? `<img src="${c.photo}" alt="${esc(c.name)}"/>` : "👤"
+      }</div>
+      <div class="c-info"><div class="c-name">${esc(c.name)}</div>${
+              c.party ? `<div class="c-party">${esc(c.party)}</div>` : ""
+            }</div>
+      ${
+        c.symbol
+          ? `<div class="c-symbol"><img src="${c.symbol}" alt="symbol"/></div>`
+          : '<div class="c-symbol">🏳️</div>'
+      }
+      <div class="mcq-radio"></div>
+    </div>`
+          )
+          .join("");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function pickCandidate(postId, candId) {
+        if (B.selections[postId] !== undefined) return;
+        B.selections[postId] = candId;
+        const post = B.election.posts.find((p) => p.id === postId);
+        post.candidates.forEach((c) => {
+          const el = $(`co-${postId}-${c.id}`);
+          if (!el) return;
+          el.classList.toggle(
+            "selected",
+            c.id.toString() === candId.toString()
+          );
+          el.classList.toggle("locked", c.id.toString() !== candId.toString());
+        });
+        const cand = post.candidates.find(
+          (c) => c.id.toString() === candId.toString()
+        );
+        $("b-sel-name").textContent = cand?.name || "";
+        $("b-sel-banner").style.display = "flex";
+        $("b-info-banner").style.display = "none";
+        const isLast = B.postIdx === B.election.posts.length - 1;
+        const btn = $("b-next-btn");
+        btn.disabled = false;
+        btn.style.opacity = "1";
+        btn.style.cursor = "pointer";
+        $("b-next-txt").textContent = isLast
+          ? "✅ Submit Final Vote"
+          : "Confirm & Go to Next Post →";
+        btn.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+
+      function confirmVote() {
+        const post = B.election.posts[B.postIdx];
+        const candId = B.selections[post.id];
+        if (candId === undefined || B.confirmed[post.id]) return;
+
+        const storedE = App.elections.find((e) => e.id === B.election.id);
+        if (storedE) {
+          const sp = storedE.posts.find((p) => p.id === post.id);
+          if (sp) {
+            const c = sp.candidates.find(
+              (c) => c.id.toString() === candId.toString()
+            );
+            if (c) c.votes = (c.votes || 0) + 1;
+          }
+        }
+        B.confirmed[post.id] = candId;
+        const isLast = B.postIdx === B.election.posts.length - 1;
+        if (isLast) {
+          App.votes.push({
+            id: "vote-" + Date.now(),
+            voterId: B.voter.id,
+            electionId: B.election.id,
+            selections: { ...B.confirmed },
+            timestamp: new Date().toISOString(),
+          });
+          for (const g of App.voterGroups) {
+            const v = g.voters.find((vt) => vt.id === B.voter.id);
+            if (v) {
+              v.voted = true;
+              break;
+            }
+          }
+          Store.save({
+            elections: App.elections,
+            votes: App.votes,
+            voterGroups: App.voterGroups,
+          });
+          sessionStorage.removeItem("vf_voter");
+          showDone();
+        } else {
+          Store.save({ elections: App.elections });
+          showToast(`Vote for "${post.name}" confirmed! ✓`, "success");
+          $("b-next-btn").disabled = true;
+          $("b-next-btn").style.opacity = "0.5";
+          setTimeout(() => loadPost(B.postIdx + 1), 500);
+        }
+      }
+
+      function showDone() {
+        $("b-post-area").style.display = "none";
+        $("b-done").style.display = "block";
+        $("b-summary").innerHTML =
+          '<div style="font-weight:700;margin-bottom:0.6rem;font-size:0.82rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Your Votes Summary</div>' +
+          B.election.posts
+            .map((post) => {
+              const cand = post.candidates.find(
+                (c) => c.id.toString() === B.confirmed[post.id]?.toString()
+              );
+              return `<div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.88rem"><span style="color:var(--muted)">${esc(
+                post.name
+              )}</span><span style="font-weight:700;color:var(--success)">✓ ${esc(
+                cand?.name || "—"
+              )}</span></div>`;
+            })
+            .join("");
+        B.election.posts.forEach((_, i) => {
+          const d = $("sd" + i);
+          if (d) {
+            d.classList.remove("current");
+            d.classList.add("done");
+            d.textContent = "✓";
+          }
+          const l = $("sl" + i);
+          if (l) l.classList.add("done");
+        });
+        showToast("All votes submitted! Thank you 🎉", "success", 5000);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        applyTheme(Store.get("theme") || "other-dark");
+        loadBallot();
+        injectFeedbackAndFooter("ballot");
+      });
+    </script>
+  </body>
+</html>

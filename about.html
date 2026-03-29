@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="other-dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>About — VoteFlow</title>
+    <link rel="stylesheet" href="shared.css" />
+    <style>
+      .about-hero {
+        text-align: center;
+        padding: 4rem 1.5rem 2rem;
+        max-width: 680px;
+        margin: 0 auto;
+      }
+      .about-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+      .about-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.22s;
+      }
+      .about-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-3px);
+      }
+      .dev-card {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2rem 3rem;
+        margin-top: 1.5rem;
+      }
+      .dev-avatar {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--primary2));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toast-container"></div>
+    <nav class="nav">
+      <a href="index.html" class="nav-logo"
+        ><div class="nav-logo-badge">🗳️</div>
+        VoteFlow</a
+      >
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html" class="active">About</a></li>
+        <li><a href="feedback.html">Feedback</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+        <div id="nav-guest-area" style="display: flex; gap: 0.6rem">
+          <a href="login.html" class="nav-btn nav-btn-ghost">Login</a
+          ><a href="register.html" class="nav-btn nav-btn-accent">Register</a>
+        </div>
+        <div id="nav-user-area" class="nav-user" style="display: none">
+          <div class="nav-avatar" id="nav-avatar-letter">U</div>
+          <span id="nav-username-display"></span
+          ><button class="nav-btn nav-btn-ghost btn-sm" onclick="logout()">
+            Logout
+          </button>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+      </div>
+    </nav>
+    <div class="page-wrap">
+      <div class="main-content medium">
+        <div class="about-hero">
+          <div class="section-title">About VoteFlow</div>
+          <p style="color: var(--muted); line-height: 1.75; margin-top: 0.8rem">
+            VoteFlow is a modern, secure online election platform designed to
+            make democratic processes accessible, transparent, and effortless
+            for schools, universities, and organisations worldwide.
+          </p>
+        </div>
+        <div class="about-grid">
+          <div class="about-card">
+            <div style="font-size: 2rem; margin-bottom: 0.8rem">🎯</div>
+            <h3 style="font-weight: 700; margin-bottom: 0.4rem">Our Mission</h3>
+            <p
+              style="font-size: 0.85rem; color: var(--muted); line-height: 1.6"
+            >
+              Empower every organisation to conduct fair, transparent elections
+              without technical barriers.
+            </p>
+          </div>
+          <div class="about-card">
+            <div style="font-size: 2rem; margin-bottom: 0.8rem">🔒</div>
+            <h3 style="font-weight: 700; margin-bottom: 0.4rem">
+              Security First
+            </h3>
+            <p
+              style="font-size: 0.85rem; color: var(--muted); line-height: 1.6"
+            >
+              Every vote is protected with invitation-code authentication and
+              one-vote enforcement.
+            </p>
+          </div>
+          <div class="about-card">
+            <div style="font-size: 2rem; margin-bottom: 0.8rem">⚡</div>
+            <h3 style="font-weight: 700; margin-bottom: 0.4rem">Real-Time</h3>
+            <p
+              style="font-size: 0.85rem; color: var(--muted); line-height: 1.6"
+            >
+              Live results dashboard updates instantly the moment a vote is
+              cast.
+            </p>
+          </div>
+          <div class="about-card">
+            <div style="font-size: 2rem; margin-bottom: 0.8rem">📤</div>
+            <h3 style="font-weight: 700; margin-bottom: 0.4rem">
+              Excel / PDF Import
+            </h3>
+            <p
+              style="font-size: 0.85rem; color: var(--muted); line-height: 1.6"
+            >
+              Upload voter lists from Excel or PDF — names, phones and codes
+              extracted automatically.
+            </p>
+          </div>
+        </div>
+        <div style="text-align: center; padding: 3rem 1.5rem">
+          <div class="section-title">Meet the Developer</div>
+          <div class="dev-card">
+            <div class="dev-avatar">👨‍💻</div>
+            <div
+              style="
+                font-family: var(--font-head);
+                font-size: 1.2rem;
+                font-weight: 700;
+              "
+            >
+              Aniket Shrivastava
+            </div>
+            <div
+              style="
+                color: var(--muted);
+                font-size: 0.85rem;
+                margin-top: 0.2rem;
+              "
+            >
+              Full Stack Developer & Creator of VoteFlow
+            </div>
+            <div
+              style="
+                color: var(--accent);
+                font-size: 0.85rem;
+                margin-top: 0.5rem;
+                font-weight: 600;
+              "
+            >
+              📧 workwithaniket7456@gmail.com
+            </div>
+          </div>
+        </div>
+        <div
+          class="card"
+          style="border-color: var(--accent); text-align: center"
+        >
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem">📧</div>
+          <div style="font-weight: 700; margin-bottom: 0.3rem">
+            All Notifications Sent From
+          </div>
+          <div style="color: var(--muted); font-size: 0.88rem">
+            OTPs, welcome emails, results and feedback
+          </div>
+          <div
+            style="
+              color: var(--accent);
+              font-weight: 700;
+              margin-top: 0.5rem;
+              font-size: 1rem;
+            "
+          >
+            workwithaniket7456@gmail.com
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="page-footer-slot"></div>
+    <script src="shared.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () =>
+        injectFeedbackAndFooter("about")
+      );
+    </script>
+  </body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="other-dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Feedback — VoteFlow</title>
+    <link rel="stylesheet" href="shared.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  </head>
+  <body>
+    <div id="toast-container"></div>
+    <nav class="nav">
+      <a href="index.html" class="nav-logo"
+        ><div class="nav-logo-badge">🗳️</div>
+        VoteFlow</a
+      >
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="feedback.html" class="active">Feedback</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+        <div id="nav-guest-area" style="display: flex; gap: 0.6rem">
+          <a href="login.html" class="nav-btn nav-btn-ghost">Login</a
+          ><a href="register.html" class="nav-btn nav-btn-accent">Register</a>
+        </div>
+        <div id="nav-user-area" class="nav-user" style="display: none">
+          <div class="nav-avatar" id="nav-avatar-letter">U</div>
+          <span id="nav-username-display"></span
+          ><button class="nav-btn nav-btn-ghost btn-sm" onclick="logout()">
+            Logout
+          </button>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+      </div>
+    </nav>
+    <div class="page-wrap">
+      <div class="main-content medium">
+        <div class="section-head">
+          <div class="section-title">Share Your Feedback</div>
+          <div class="section-sub">
+            Help us improve VoteFlow for everyone. All feedback goes directly to
+            the developer.
+          </div>
+        </div>
+        <div class="card">
+          <div class="form-group">
+            <label class="form-label">Your Name (Optional)</label
+            ><input
+              type="text"
+              class="form-input"
+              id="fb-name"
+              placeholder="Your name"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email (Optional — for reply)</label
+            ><input
+              type="email"
+              class="form-input"
+              id="fb-email"
+              placeholder="your@email.com"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select class="form-input" id="fb-cat">
+              <option>General Feedback</option>
+              <option>Bug Report</option>
+              <option>Feature Request</option>
+              <option>Voting Experience</option>
+              <option>Design & UI</option>
+              <option>Performance</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Your Experience</label>
+            <div class="emoji-row" data-fb="main">
+              <button
+                class="emoji-btn"
+                onclick="pickEmoji(this,'main')"
+                title="Loved it"
+              >
+                😍
+              </button>
+              <button
+                class="emoji-btn"
+                onclick="pickEmoji(this,'main')"
+                title="Good"
+              >
+                😊
+              </button>
+              <button
+                class="emoji-btn"
+                onclick="pickEmoji(this,'main')"
+                title="Neutral"
+              >
+                😐
+              </button>
+              <button
+                class="emoji-btn"
+                onclick="pickEmoji(this,'main')"
+                title="Needs work"
+              >
+                😕
+              </button>
+              <button
+                class="emoji-btn"
+                onclick="pickEmoji(this,'main')"
+                title="Disappointed"
+              >
+                😞
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Message *</label
+            ><textarea
+              class="form-input"
+              id="fb-msg"
+              placeholder="Tell us your thoughts, suggestions, or report an issue..."
+              style="min-height: 140px"
+            ></textarea>
+          </div>
+          <button
+            class="btn btn-primary btn-full btn-lg"
+            id="fb-btn"
+            onclick="sendFeedback()"
+          >
+            Send Feedback 💬
+          </button>
+        </div>
+        <div
+          class="card"
+          style="
+            margin-top: 1rem;
+            text-align: center;
+            border-color: rgba(246, 201, 14, 0.3);
+          "
+        >
+          <div style="font-size: 1.3rem; margin-bottom: 0.5rem">📬</div>
+          <div style="font-weight: 700; margin-bottom: 0.3rem">
+            Feedback goes directly to
+          </div>
+          <div style="color: var(--accent); font-weight: 700">
+            workwithaniket7456@gmail.com
+          </div>
+          <div
+            style="color: var(--muted); font-size: 0.83rem; margin-top: 0.3rem"
+          >
+            Aniket Shrivastava — Developer
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="page-footer-slot"></div>
+    <script src="shared.js"></script>
+    <script>
+      let _fbEmoji = null;
+      function pickEmoji(btn, k) {
+        document
+          .querySelectorAll('[data-fb="main"] .emoji-btn')
+          .forEach((b) => b.classList.remove("picked"));
+        btn.classList.add("picked");
+        _fbEmoji = btn.textContent;
+      }
+      function sendFeedback() {
+        const msg = $("fb-msg").value.trim();
+        if (!msg) {
+          showToast("Please write your feedback", "warn");
+          return;
+        }
+        const btn = $("fb-btn");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Sending...';
+        const fb = {
+          id: "fb-" + Date.now(),
+          page: "feedback-page",
+          emoji: _fbEmoji || "😐",
+          name: $("fb-name").value.trim(),
+          email: $("fb-email").value.trim(),
+          category: $("fb-cat").value,
+          text: msg,
+          user: App.currentUser?.username || "Guest",
+          time: new Date().toISOString(),
+        };
+        App.feedbacks.push(fb);
+        Store.save({ feedbacks: App.feedbacks });
+        EmailService.send("feedback", {
+          to_email: EMAIL_CONFIG.FEEDBACK_EMAIL,
+          to_name: "Aniket",
+          subject: `VoteFlow Feedback — ${fb.category}`,
+          message: `Category: ${fb.category}\nRating: ${fb.emoji}\nFrom: ${
+            fb.name || "Anonymous"
+          } (${fb.email || "—"})\nUser: ${fb.user}\n\nMessage:\n${
+            fb.text
+          }\n\nTime: ${new Date().toLocaleString()}`,
+        }).then((r) => {
+          btn.disabled = false;
+          btn.textContent = "Send Feedback 💬";
+          $("fb-name").value = "";
+          $("fb-email").value = "";
+          $("fb-msg").value = "";
+          _fbEmoji = null;
+          document
+            .querySelectorAll('[data-fb="main"] .emoji-btn')
+            .forEach((b) => b.classList.remove("picked"));
+          if (r.method !== "demo")
+            showToast("Feedback sent to Aniket! Thank you 💬", "success", 5000);
+          else
+            showToast(
+              "Feedback saved locally (email not configured)",
+              "info",
+              4000
+            );
+        });
+      }
+      document.addEventListener("DOMContentLoaded", () =>
+        injectFeedbackAndFooter("feedback")
+      );
+    </script>
+  </body>
+</html>

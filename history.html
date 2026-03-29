@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="other-dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>History — VoteFlow</title>
+    <link rel="stylesheet" href="shared.css" />
+    <style>
+      .history-item {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.4rem;
+        margin-bottom: 0.8rem;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .history-item:hover {
+        border-color: var(--primary);
+        transform: translateX(3px);
+      }
+      .h-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+      }
+      .filter-chips {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+      }
+      .chip {
+        padding: 0.38rem 0.85rem;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        background: var(--bg3);
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .chip:hover,
+      .chip.active {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toast-container"></div>
+    <nav class="nav">
+      <a href="index.html" class="nav-logo"
+        ><div class="nav-logo-badge">🗳️</div>
+        VoteFlow</a
+      >
+      <ul class="nav-links">
+        <li><a href="dashboard.html" data-auth>Dashboard</a></li>
+        <li><a href="history.html" class="active" data-auth>History</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+        <div id="nav-guest-area" style="display: none"></div>
+        <div id="nav-user-area" class="nav-user" style="display: none">
+          <div class="nav-avatar" id="nav-avatar-letter">U</div>
+          <span id="nav-username-display"></span
+          ><button class="nav-btn nav-btn-ghost btn-sm" onclick="logout()">
+            Logout
+          </button>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+      </div>
+    </nav>
+    <div class="page-wrap">
+      <div class="main-content">
+        <div style="margin-bottom: 2rem">
+          <div class="section-title">Election History</div>
+          <div style="color: var(--muted); font-size: 0.9rem">
+            All past and present elections
+          </div>
+        </div>
+        <div class="filter-chips">
+          <button class="chip active" onclick="filterH('all',this)">All</button>
+          <button class="chip" onclick="filterH('live',this)">🟢 Live</button>
+          <button class="chip" onclick="filterH('upcoming',this)">
+            ⏳ Upcoming
+          </button>
+          <button class="chip" onclick="filterH('ended',this)">
+            ✅ Completed
+          </button>
+        </div>
+        <div id="history-list"></div>
+      </div>
+    </div>
+    <div id="page-footer-slot"></div>
+    <script src="shared.js"></script>
+    <script>
+      function renderHistory(filter = "all") {
+        checkElectionTimers();
+        let list = App.elections.filter(
+          (e) => e.userId === App.currentUser?.id
+        );
+        if (filter !== "all") list = list.filter((e) => e.status === filter);
+        list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const cont = $("history-list");
+        if (!list.length) {
+          cont.innerHTML =
+            '<div class="empty-state"><span class="empty-icon">📜</span><h3>No elections found</h3><p>Your election history will appear here</p></div>';
+          return;
+        }
+        const ic = { live: "🟢", upcoming: "⏳", ended: "✅" };
+        const cl = {
+          live: "rgba(34,197,94,0.15)",
+          upcoming: "rgba(245,158,11,0.15)",
+          ended: "rgba(27,94,247,0.15)",
+        };
+        cont.innerHTML = list
+          .map((e) => {
+            const votes = App.votes.filter((v) => v.electionId === e.id).length;
+            const grp = App.voterGroups.find((g) => g.id === e.voterGroupId);
+            const total = grp ? grp.voters.length : 0;
+            return `<div class="history-item" onclick="viewEl('${
+              e.id
+            }')"><div class="h-icon" style="background:${
+              cl[e.status] || cl.ended
+            }">${
+              ic[e.status] || "📋"
+            }</div><div style="flex:1"><div style="font-weight:700;font-size:0.95rem;margin-bottom:0.3rem">${esc(
+              e.title
+            )}</div><div style="font-size:0.8rem;color:var(--muted);display:flex;gap:1rem;flex-wrap:wrap"><span>${
+              e.type === "single" ? "Single Post" : e.posts?.length + " posts"
+            }</span><span>${votes}/${total} voted</span><span>${new Date(
+              e.createdAt
+            ).toLocaleDateString()}</span></div></div><span style="font-size:1.2rem;color:var(--muted)">›</span></div>`;
+          })
+          .join("");
+      }
+      function filterH(f, btn) {
+        document
+          .querySelectorAll(".chip")
+          .forEach((c) => c.classList.remove("active"));
+        btn.classList.add("active");
+        renderHistory(f);
+      }
+      function viewEl(id) {
+        sessionStorage.setItem("vf_view_election", id);
+        window.location = "results.html";
+      }
+      document.addEventListener("DOMContentLoaded", () => {
+        const user = requireAuth();
+        if (!user) return;
+        App.currentUser = user;
+        renderHistory();
+        injectFeedbackAndFooter("history");
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="other-dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Register — VoteFlow</title>
+    <link rel="stylesheet" href="shared.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <style>
+      .auth-wrap {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5.5rem 1.5rem 2rem;
+        position: relative;
+        overflow: hidden;
+        min-height: 100vh;
+      }
+      .auth-bg {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          ellipse 70% 50% at 50% 0%,
+          rgba(27, 94, 247, 0.12) 0%,
+          transparent 70%
+        );
+      }
+      .auth-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2.2rem;
+        width: 100%;
+        max-width: 480px;
+        position: relative;
+        z-index: 1;
+        animation: slideUp 0.5s ease both;
+        box-shadow: var(--shadow);
+      }
+      .auth-brand {
+        text-align: center;
+        margin-bottom: 1.4rem;
+      }
+      .auth-title {
+        font-family: var(--font-head);
+        font-size: 1.6rem;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 0.3rem;
+      }
+      .auth-sub {
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.88rem;
+        margin-bottom: 1.6rem;
+      }
+
+      .step-bar {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.8rem;
+      }
+      .step-item {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        flex: 1;
+      }
+      .step-circle {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 2px solid var(--border);
+        background: var(--bg3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        transition: all 0.3s;
+        flex-shrink: 0;
+        color: var(--muted);
+      }
+      .step-circle.active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: #fff;
+      }
+      .step-circle.done {
+        border-color: var(--success);
+        background: var(--success);
+        color: #fff;
+      }
+      .step-label {
+        font-size: 0.74rem;
+        font-weight: 600;
+        color: var(--muted);
+        transition: color 0.3s;
+      }
+      .step-label.active {
+        color: var(--text);
+      }
+      .step-line {
+        flex: 1;
+        height: 2px;
+        background: var(--border);
+        margin: 0 0.3rem;
+        transition: background 0.3s;
+      }
+      .step-line.done {
+        background: var(--success);
+      }
+
+      .otp-row {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        margin: 1rem 0;
+      }
+      .otp-box {
+        width: 46px;
+        height: 52px;
+        text-align: center;
+        font-size: 1.4rem;
+        font-weight: 700;
+        background: var(--bg2);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text);
+        outline: none;
+        transition: border 0.2s;
+        font-family: var(--font-body);
+        caret-color: var(--primary);
+      }
+      .otp-box:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(27, 94, 247, 0.1);
+      }
+      .otp-box.filled {
+        border-color: var(--success);
+      }
+
+      .strength-wrap {
+        margin-top: 0.5rem;
+      }
+      .strength-bar {
+        height: 4px;
+        background: var(--bg3);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+      }
+      .strength-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: all 0.3s;
+        width: 0%;
+      }
+      .rules-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.3rem;
+      }
+      .rule-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.77rem;
+        color: var(--muted);
+        transition: color 0.2s;
+      }
+      .rule-item.met {
+        color: var(--success);
+      }
+      .rule-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: currentColor;
+        flex-shrink: 0;
+      }
+      .timer-row {
+        text-align: center;
+        margin-top: 0.7rem;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+      .resend-link {
+        background: none;
+        border: none;
+        color: var(--primary);
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: var(--font-body);
+      }
+      .resend-link:disabled {
+        color: var(--muted);
+        cursor: default;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toast-container"></div>
+    <nav class="nav">
+      <a href="index.html" class="nav-logo"
+        ><div class="nav-logo-badge">🗳️</div>
+        VoteFlow</a
+      >
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+        <div id="nav-guest-area" style="display: flex; gap: 0.6rem">
+          <a href="login.html" class="nav-btn nav-btn-ghost">Login</a>
+        </div>
+        <div id="nav-user-area" class="nav-user" style="display: none">
+          <div class="nav-avatar" id="nav-avatar-letter">U</div>
+          <span id="nav-username-display"></span>
+          <button class="nav-btn nav-btn-ghost btn-sm" onclick="logout()">
+            Logout
+          </button>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+      </div>
+    </nav>
+
+    <div class="auth-wrap">
+      <div class="auth-bg"></div>
+      <div class="auth-card">
+        <div class="auth-brand"><span style="font-size: 2rem">🗳️</span></div>
+        <div class="auth-title">Create Account</div>
+        <div class="auth-sub" id="step-sub">
+          Step 1 of 3 — Basic Information
+        </div>
+
+        <div class="step-bar">
+          <div class="step-item">
+            <div class="step-circle active" id="sc1">1</div>
+            <span class="step-label active" id="sl1">Info</span>
+          </div>
+          <div class="step-line" id="sline1"></div>
+          <div class="step-item">
+            <div class="step-circle" id="sc2">2</div>
+            <span class="step-label" id="sl2">Verify</span>
+          </div>
+          <div class="step-line" id="sline2"></div>
+          <div class="step-item">
+            <div class="step-circle" id="sc3">3</div>
+            <span class="step-label" id="sl3">Password</span>
+          </div>
+        </div>
+
+        <div id="step1">
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input
+              type="text"
+              class="form-input"
+              id="reg-username"
+              placeholder="Choose a username"
+              oninput="validateUsername()"
+            />
+            <div class="field-msg" id="msg-username"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input
+              type="email"
+              class="form-input"
+              id="reg-email"
+              placeholder="your@email.com"
+              oninput="validateEmail()"
+            />
+            <div class="field-msg" id="msg-email"></div>
+          </div>
+          <button
+            class="btn btn-primary btn-full btn-lg"
+            id="btn-step1"
+            onclick="sendOTP()"
+          >
+            Send Verification OTP →
+          </button>
+          <p
+            style="
+              text-align: center;
+              margin-top: 1rem;
+              font-size: 0.85rem;
+              color: var(--muted);
+            "
+          >
+            Already have an account?
+            <a href="login.html" style="color: var(--primary); font-weight: 700"
+              >Login</a
+            >
+          </p>
+        </div>
+
+        <div id="step2" style="display: none">
+          <p
+            style="
+              text-align: center;
+              color: var(--muted);
+              font-size: 0.88rem;
+              margin-bottom: 1rem;
+            "
+          >
+            We sent a 6-digit OTP to
+            <strong id="otp-email-shown" style="color: var(--text)"></strong>
+          </p>
+          <div class="otp-row" id="otp-boxes"></div>
+          <div class="timer-row" id="timer-row">
+            Resend in <span id="otp-countdown">60</span>s
+          </div>
+          <div style="text-align: center; margin-bottom: 1rem">
+            <button
+              class="resend-link"
+              id="resend-btn"
+              onclick="resendOTP()"
+              disabled
+            >
+              Resend OTP
+            </button>
+          </div>
+          <button class="btn btn-primary btn-full" onclick="verifyOTP()">
+            Verify OTP →
+          </button>
+          <button
+            class="btn btn-ghost btn-full"
+            style="margin-top: 0.6rem"
+            onclick="showStep(1)"
+          >
+            ← Back
+          </button>
+        </div>
+
+        <div id="step3" style="display: none">
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <div class="input-wrap">
+              <input
+                type="password"
+                class="form-input"
+                id="reg-password"
+                placeholder="Create strong password"
+                oninput="checkPassword()"
+              />
+              <button
+                class="input-icon"
+                type="button"
+                onclick="togglePass('reg-password',this)"
+              >
+                👁️
+              </button>
+            </div>
+            <div class="strength-wrap">
+              <div class="strength-bar">
+                <div class="strength-fill" id="strength-fill"></div>
+              </div>
+              <div
+                style="
+                  font-size: 0.8rem;
+                  font-weight: 700;
+                  margin-bottom: 0.4rem;
+                "
+                id="strength-label"
+              ></div>
+              <div class="rules-grid">
+                <div class="rule-item" id="rule-upper">
+                  <div class="rule-dot"></div>
+                  Uppercase letter
+                </div>
+                <div class="rule-item" id="rule-lower">
+                  <div class="rule-dot"></div>
+                  Lowercase letter
+                </div>
+                <div class="rule-item" id="rule-num">
+                  <div class="rule-dot"></div>
+                  Number (0-9)
+                </div>
+                <div class="rule-item" id="rule-sym">
+                  <div class="rule-dot"></div>
+                  Symbol (!@#...)
+                </div>
+                <div class="rule-item" id="rule-len">
+                  <div class="rule-dot"></div>
+                  Min 8 characters
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm Password</label>
+            <div class="input-wrap">
+              <input
+                type="password"
+                class="form-input"
+                id="reg-confirm"
+                placeholder="Re-enter password"
+                oninput="checkConfirm()"
+              />
+              <button
+                class="input-icon"
+                type="button"
+                onclick="togglePass('reg-confirm',this)"
+              >
+                👁️
+              </button>
+            </div>
+            <div class="field-msg" id="msg-confirm"></div>
+          </div>
+          <button
+            class="btn btn-primary btn-full btn-lg"
+            id="btn-register"
+            onclick="completeReg()"
+          >
+            Create Account 🎉
+          </button>
+          <button
+            class="btn btn-ghost btn-full"
+            style="margin-top: 0.6rem"
+            onclick="showStep(2)"
+          >
+            ← Back
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-footer-slot"></div>
+    <script src="shared.js"></script>
+    <script>
+      const Reg = { username: "", email: "", otp: "", timerRef: null };
+
+      function validateUsername() {
+        const v = $("reg-username").value.trim(),
+          msg = $("msg-username"),
+          inp = $("reg-username");
+        if (v.length < 3) {
+          msg.className = "field-msg err";
+          msg.textContent = "⚠ Min 3 characters";
+          inp.className = "form-input err";
+          return false;
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(v)) {
+          msg.className = "field-msg err";
+          msg.textContent = "⚠ Letters, numbers, underscore only";
+          inp.className = "form-input err";
+          return false;
+        }
+        if (
+          App.users.find((u) => u.username.toLowerCase() === v.toLowerCase())
+        ) {
+          msg.className = "field-msg err";
+          msg.textContent = "⚠ Username already taken";
+          inp.className = "form-input err";
+          return false;
+        }
+        msg.className = "field-msg ok";
+        msg.textContent = "✓ Username available";
+        inp.className = "form-input ok";
+        return true;
+      }
+      function validateEmail() {
+        const v = $("reg-email").value.trim(),
+          msg = $("msg-email"),
+          inp = $("reg-email");
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+          msg.className = "field-msg err";
+          msg.textContent = "⚠ Invalid email";
+          inp.className = "form-input err";
+          return false;
+        }
+        msg.className = "field-msg ok";
+        msg.textContent = "✓ Valid email";
+        inp.className = "form-input ok";
+        return true;
+      }
+      function buildOTPBoxes() {
+        const cont = $("otp-boxes");
+        cont.innerHTML = "";
+        for (let i = 0; i < 6; i++) {
+          const inp = document.createElement("input");
+          inp.type = "text";
+          inp.maxLength = 1;
+          inp.inputMode = "numeric";
+          inp.className = "otp-box";
+          inp.dataset.i = i;
+          inp.addEventListener("input", (e) => {
+            e.target.value = e.target.value.replace(/\D/g, "");
+            if (e.target.value && i < 5) cont.children[i + 1].focus();
+            if (e.target.value) e.target.classList.add("filled");
+            else e.target.classList.remove("filled");
+          });
+          inp.addEventListener("keydown", (e) => {
+            if (e.key === "Backspace" && !e.target.value && i > 0) {
+              cont.children[i - 1].focus();
+              cont.children[i - 1].classList.remove("filled");
+            }
+          });
+          cont.appendChild(inp);
+        }
+      }
+      function sendOTP() {
+        if (!validateUsername() || !validateEmail()) return;
+        Reg.username = $("reg-username").value.trim();
+        Reg.email = $("reg-email").value.trim();
+        Reg.otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const btn = $("btn-step1");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Sending OTP...';
+        EmailService.send("otp", {
+          to_email: Reg.email,
+          to_name: Reg.username,
+          otp_code: Reg.otp,
+          subject: "Your VoteFlow Verification Code",
+          message: `Hello ${Reg.username},\n\nYour VoteFlow OTP is: ${Reg.otp}\n\nExpires in 10 minutes. Do not share.\n\n— VoteFlow\nworkwithaniket7456@gmail.com`,
+        }).then((r) => {
+          btn.disabled = false;
+          btn.textContent = "Send Verification OTP →";
+          $("otp-email-shown").textContent = Reg.email;
+          showStep(2);
+          buildOTPBoxes();
+          startTimer();
+          if (r.method === "demo")
+            showToast(
+              `⚠ Email not configured — Demo OTP: ${Reg.otp}`,
+              "warn",
+              12000
+            );
+          else showToast(`✅ OTP sent to ${Reg.email}!`, "success", 5000);
+        });
+      }
+      function startTimer() {
+        clearInterval(Reg.timerRef);
+        let s = 60;
+        $("otp-countdown").textContent = s;
+        $("resend-btn").disabled = true;
+        $("timer-row").style.display = "block";
+        Reg.timerRef = setInterval(() => {
+          s--;
+          $("otp-countdown").textContent = s;
+          if (s <= 0) {
+            clearInterval(Reg.timerRef);
+            $("timer-row").style.display = "none";
+            $("resend-btn").disabled = false;
+          }
+        }, 1000);
+      }
+      function resendOTP() {
+        Reg.otp = Math.floor(100000 + Math.random() * 900000).toString();
+        $("resend-btn").disabled = true;
+        $("resend-btn").textContent = "Sending...";
+        EmailService.send("otp", {
+          to_email: Reg.email,
+          to_name: Reg.username,
+          otp_code: Reg.otp,
+          subject: "Your VoteFlow OTP (Resent)",
+          message: `Hello ${Reg.username}, your new OTP is: ${Reg.otp}`,
+        }).then((r) => {
+          buildOTPBoxes();
+          startTimer();
+          $("resend-btn").textContent = "Resend OTP";
+          if (r.method === "demo")
+            showToast(`⚠ Demo OTP: ${Reg.otp}`, "warn", 12000);
+          else showToast("New OTP sent!", "success");
+        });
+      }
+      function verifyOTP() {
+        const boxes = document.querySelectorAll(".otp-box");
+        const entered = Array.from(boxes)
+          .map((b) => b.value)
+          .join("");
+        if (entered.length < 6) {
+          showToast("Enter all 6 digits", "error");
+          return;
+        }
+        if (entered !== Reg.otp) {
+          showToast("Incorrect OTP. Try again.", "error");
+          $("otp-boxes").style.animation = "shake 0.4s ease";
+          setTimeout(() => ($("otp-boxes").style.animation = ""), 500);
+          boxes.forEach((b) => {
+            b.value = "";
+            b.classList.remove("filled");
+          });
+          boxes[0].focus();
+          return;
+        }
+        clearInterval(Reg.timerRef);
+        showToast("Email verified! ✓", "success");
+        showStep(3);
+      }
+      function checkPassword() {
+        const p = $("reg-password").value;
+        const r = {
+          upper: /[A-Z]/.test(p),
+          lower: /[a-z]/.test(p),
+          num: /[0-9]/.test(p),
+          sym: /[^A-Za-z0-9]/.test(p),
+          len: p.length >= 8,
+        };
+        ["upper", "lower", "num", "sym", "len"].forEach((k) =>
+          $("rule-" + k)?.classList.toggle("met", r[k])
+        );
+        const s = Object.values(r).filter(Boolean).length;
+        const c = ["", "#ef4444", "#f59e0b", "#f59e0b", "#22c55e", "#22c55e"];
+        const l = ["", "Weak", "Fair", "Good", "Strong", "Very Strong"];
+        $("strength-fill").style.cssText = `width:${s * 20}%;background:${
+          c[s]
+        }`;
+        $("strength-label").textContent = l[s];
+        $("strength-label").style.color = c[s];
+      }
+      function checkConfirm() {
+        const p = $("reg-password").value,
+          c = $("reg-confirm").value;
+        const msg = $("msg-confirm"),
+          inp = $("reg-confirm");
+        if (!c) {
+          msg.textContent = "";
+          return;
+        }
+        if (p === c) {
+          msg.className = "field-msg ok";
+          msg.textContent = "✓ Passwords match";
+          inp.className = "form-input ok";
+        } else {
+          msg.className = "field-msg err";
+          msg.textContent = "⚠ Passwords do not match";
+          inp.className = "form-input err";
+        }
+      }
+      function completeReg() {
+        const pass = $("reg-password").value,
+          conf = $("reg-confirm").value;
+        if (pass !== conf) {
+          showToast("Passwords do not match", "error");
+          return;
+        }
+        if (
+          ![/[A-Z]/, /[a-z]/, /[0-9]/, /[^A-Za-z0-9]/].every((r) =>
+            r.test(pass)
+          ) ||
+          pass.length < 8
+        ) {
+          showToast("Password must meet all requirements", "error");
+          return;
+        }
+        const btn = $("btn-register");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Creating...';
+        const user = {
+          id: "u-" + Date.now(),
+          username: Reg.username,
+          email: Reg.email,
+          password: pass,
+          createdAt: new Date().toISOString(),
+        };
+        App.users.push(user);
+        Store.save({ users: App.users });
+        EmailService.send("welcome", {
+          to_email: user.email,
+          to_name: user.username,
+          username: user.username,
+          subject: "Welcome to VoteFlow!",
+          message: `Hello ${user.username},\n\nYour VoteFlow account is ready!\nUsername: ${user.username}\n\nBest regards,\nAniket Shrivastava\nworkwithaniket7456@gmail.com`,
+        }).then((r) => {
+          btn.disabled = false;
+          btn.textContent = "Create Account 🎉";
+          showToast(
+            `🎉 Account created!${
+              r.method !== "demo" ? " Welcome email sent!" : ""
+            }`,
+            "success",
+            4000
+          );
+          saveSession(user);
+          setTimeout(() => (window.location = "dashboard.html"), 1000);
+        });
+      }
+      function showStep(n) {
+        [1, 2, 3].forEach((i) => {
+          $("step" + i).style.display = i === n ? "block" : "none";
+        });
+        const subs = [
+          "Step 1 of 3 — Basic Information",
+          "Step 2 of 3 — Email Verification",
+          "Step 3 of 3 — Set Password",
+        ];
+        $("step-sub").textContent = subs[n - 1];
+        [1, 2, 3].forEach((i) => {
+          const sc = $("sc" + i),
+            sl = $("sl" + i);
+          if (i < n) {
+            sc.className = "step-circle done";
+            sc.textContent = "✓";
+          } else if (i === n) {
+            sc.className = "step-circle active";
+            sc.textContent = i;
+            sl.className = "step-label active";
+          } else {
+            sc.className = "step-circle";
+            sc.textContent = i;
+            sl.className = "step-label";
+          }
+          if (i < 3) $("sline" + i)?.classList.toggle("done", n > i);
+        });
+      }
+      document.addEventListener("DOMContentLoaded", () => {
+        const u = loadSession();
+        if (u) window.location = "dashboard.html";
+        injectFeedbackAndFooter("register");
+        buildOTPBoxes();
+      });
+    </script>
+  </body>
+</html>

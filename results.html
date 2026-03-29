@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="other-dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Live Results — VoteFlow</title>
+    <link rel="stylesheet" href="shared.css" />
+    <style>
+      .result-post {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      .cand-result {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.9rem;
+      }
+      .cand-photo {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--bg3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .cand-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+      }
+      .result-bar {
+        flex: 1;
+        height: 8px;
+        background: var(--bg3);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .result-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 1s ease;
+      }
+      .winner-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.2rem 0.55rem;
+        background: rgba(246, 201, 14, 0.2);
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toast-container"></div>
+    <nav class="nav">
+      <a href="index.html" class="nav-logo"
+        ><div class="nav-logo-badge">🗳️</div>
+        VoteFlow</a
+      >
+      <ul class="nav-links">
+        <li><a href="dashboard.html" data-auth>Dashboard</a></li>
+        <li><a href="history.html" data-auth>History</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+        <div id="nav-guest-area" style="display: none"></div>
+        <div id="nav-user-area" class="nav-user" style="display: none">
+          <div class="nav-avatar" id="nav-avatar-letter">U</div>
+          <span id="nav-username-display"></span
+          ><button class="nav-btn nav-btn-ghost btn-sm" onclick="logout()">
+            Logout
+          </button>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+      </div>
+    </nav>
+    <div class="page-wrap">
+      <div class="main-content medium">
+        <div
+          style="
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+          "
+        >
+          <div>
+            <div class="section-title" id="r-title">Results</div>
+            <div
+              style="
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+                margin-top: 0.4rem;
+              "
+              id="r-badges"
+            ></div>
+          </div>
+          <div style="display: flex; gap: 0.6rem; flex-wrap: wrap">
+            <a href="dashboard.html" class="btn btn-ghost">← Back</a>
+            <button
+              class="btn btn-danger btn-sm"
+              id="end-btn"
+              onclick="endElection()"
+              style="display: none"
+            >
+              ⏹ End Election
+            </button>
+            <button
+              class="btn btn-success btn-sm"
+              id="pdf-btn"
+              onclick="exportPDF()"
+              style="display: none"
+            >
+              📄 Export PDF
+            </button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 1rem">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 0.7rem;
+            "
+          >
+            <div class="card-title" style="margin: 0">
+              📊 Voter Participation
+            </div>
+            <span class="badge badge-primary" id="r-pct">0%</span>
+          </div>
+          <div class="progress-bar" style="margin-bottom: 0.5rem">
+            <div class="progress-fill" id="r-pbar" style="width: 0%"></div>
+          </div>
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              font-size: 0.82rem;
+              color: var(--muted);
+            "
+          >
+            <span id="r-voted">0 voted</span
+            ><span id="r-remaining">0 remaining</span>
+          </div>
+          <div style="margin-top: 0.8rem" id="r-voter-list"></div>
+        </div>
+        <div id="r-posts"></div>
+        <div
+          id="r-ended-banner"
+          style="display: none"
+          class="card"
+          style="text-align: center; border-color: var(--success)"
+        >
+          <div style="font-size: 2rem; margin-bottom: 0.5rem">🏆</div>
+          <div
+            style="font-weight: 700; font-size: 1.1rem; margin-bottom: 0.3rem"
+          >
+            Election Ended — Final Results
+          </div>
+          <div
+            style="color: var(--muted); font-size: 0.88rem; margin-bottom: 1rem"
+          >
+            Results have been recorded.
+          </div>
+          <button class="btn btn-success" onclick="exportPDF()">
+            📄 Download PDF Report
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="page-footer-slot"></div>
+    <script src="shared.js"></script>
+    <script>
+      let viewId = null,
+        liveTimer = null;
+      function loadResults() {
+        viewId = sessionStorage.getItem("vf_view_election");
+        if (!viewId) {
+          window.location = "dashboard.html";
+          return;
+        }
+        checkElectionTimers();
+        const e = App.elections.find((x) => x.id === viewId);
+        if (!e) {
+          window.location = "dashboard.html";
+          return;
+        }
+        $("r-title").textContent = e.title;
+        const grp = App.voterGroups.find((g) => g.id === e.voterGroupId);
+        const total = grp ? grp.voters.length : 0,
+          voted = App.votes.filter((v) => v.electionId === viewId).length;
+        const pct = total ? Math.round((voted / total) * 100) : 0;
+        $("r-pct").textContent = pct + "%";
+        $("r-pbar").style.width = pct + "%";
+        $("r-voted").textContent = voted + " voted";
+        $("r-remaining").textContent = total - voted + " remaining";
+        $("r-badges").innerHTML = `<span class="badge ${
+          e.status === "live"
+            ? "badge-success"
+            : e.status === "upcoming"
+            ? "badge-warn"
+            : "badge-muted"
+        }">${
+          e.status === "live"
+            ? "🟢 Live"
+            : e.status === "upcoming"
+            ? "⏳ Upcoming"
+            : "✅ Ended"
+        }</span><span class="badge badge-primary">${
+          e.type === "single" ? "Single Post" : "Group Post"
+        }</span><span class="badge badge-muted">${voted}/${total}</span>`;
+        if (grp && grp.voters.length) {
+          $("r-voter-list").innerHTML =
+            `<div style="max-height:150px;overflow-y:auto">` +
+            grp.voters
+              .map((v) => {
+                const hv = App.votes.find(
+                  (vt) => vt.voterId === v.id && vt.electionId === viewId
+                );
+                return `<div style="display:flex;justify-content:space-between;padding:0.35rem 0;border-bottom:1px solid var(--border);font-size:0.82rem"><span>${esc(
+                  v.name
+                )}</span><span class="badge ${
+                  hv ? "badge-success" : "badge-muted"
+                }">${hv ? "✓ Voted" : "Pending"}</span></div>`;
+              })
+              .join("") +
+            `</div>`;
+        }
+        $("r-posts").innerHTML = e.posts
+          .map((post) => {
+            const tv = post.candidates.reduce((s, c) => s + (c.votes || 0), 0);
+            const winner = post.candidates.reduce(
+              (a, b) => ((b.votes || 0) > (a.votes || 0) ? b : a),
+              post.candidates[0]
+            );
+            return (
+              `<div class="result-post"><div style="font-family:var(--font-head);font-size:1rem;font-weight:700;margin-bottom:1.2rem;display:flex;align-items:center;gap:0.5rem">🏆 ${esc(
+                post.name
+              )} ${
+                e.status === "ended" && winner
+                  ? `<span class="winner-badge">🥇 ${esc(winner.name)}</span>`
+                  : ""
+              }</div>` +
+              post.candidates
+                .map((c) => {
+                  const pct = tv ? Math.round(((c.votes || 0) / tv) * 100) : 0;
+                  const isW = e.status === "ended" && c === winner;
+                  return `<div class="cand-result"><div class="cand-photo">${
+                    c.photo ? `<img src="${c.photo}"/>` : "👤"
+                  }</div><div style="flex:1"><div style="font-weight:700;font-size:0.92rem;margin-bottom:0.3rem">${esc(
+                    c.name
+                  )}${
+                    c.party
+                      ? ` <span style="font-size:0.76rem;color:var(--muted)">· ${esc(
+                          c.party
+                        )}</span>`
+                      : ""
+                  }</div><div style="display:flex;align-items:center;gap:0.8rem"><div class="result-bar"><div class="result-fill" style="width:${pct}%;background:${
+                    isW ? "var(--accent)" : "var(--primary)"
+                  }"></div></div><span style="font-size:0.82rem;font-weight:700;color:var(--accent);min-width:38px;text-align:right">${pct}%</span></div><div style="font-size:0.78rem;color:var(--muted)">${
+                    c.votes || 0
+                  } vote${(c.votes || 0) !== 1 ? "s" : ""}</div></div></div>`;
+                })
+                .join("") +
+              `</div>`
+            );
+          })
+          .join("");
+        $("end-btn").style.display =
+          e.status === "live" ? "inline-flex" : "none";
+        $("pdf-btn").style.display =
+          e.status === "ended" ? "inline-flex" : "none";
+        $("r-ended-banner").style.display =
+          e.status === "ended" ? "block" : "none";
+        if (e.status === "live") {
+          clearInterval(liveTimer);
+          liveTimer = setInterval(() => {
+            Object.assign(App, Store.load());
+            loadResults();
+          }, 5000);
+        }
+      }
+      function endElection() {
+        const e = App.elections.find((x) => x.id === viewId);
+        if (!e || !confirm(`End "${e.title}"?`)) return;
+        e.status = "ended";
+        e.endedAt = new Date().toISOString();
+        Store.save({ elections: App.elections });
+        clearInterval(liveTimer);
+        showToast("Election ended. Results finalised!", "success");
+        loadResults();
+      }
+      function exportPDF() {
+        const e = App.elections.find((x) => x.id === viewId);
+        if (!e) return;
+        const grp = App.voterGroups.find((g) => g.id === e.voterGroupId);
+        const total = grp ? grp.voters.length : 0,
+          voted = App.votes.filter((v) => v.electionId === viewId).length;
+        const lines = [
+          "VoteFlow Official Election Result",
+          "Developer: Aniket Shrivastava | workwithaniket7456@gmail.com",
+          "=".repeat(50),
+          "",
+          `Election: ${e.title}`,
+          `Status: ${e.status}`,
+          `Participation: ${voted}/${total}`,
+          "",
+          ...e.posts.flatMap((p) => {
+            const tv = p.candidates.reduce((s, c) => s + (c.votes || 0), 0);
+            const w = p.candidates.reduce(
+              (a, b) => ((b.votes || 0) > (a.votes || 0) ? b : a),
+              p.candidates[0]
+            );
+            return [
+              `POST: ${p.name}`,
+              `Winner: ${w?.name}`,
+              ...p.candidates.map(
+                (c) =>
+                  `  ${c.name.padEnd(22)}${c.votes || 0} votes (${
+                    tv ? Math.round(((c.votes || 0) / tv) * 100) : 0
+                  }%)`
+              ),
+              "",
+            ];
+          }),
+          "=".repeat(50),
+          `Generated: ${new Date().toLocaleString()}`,
+        ];
+        const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `VoteFlow_${e.title.replace(/\s+/g, "_")}.txt`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showToast("Report downloaded!", "success");
+      }
+      document.addEventListener("DOMContentLoaded", () => {
+        const user = requireAuth();
+        if (!user) return;
+        App.currentUser = user;
+        loadResults();
+        injectFeedbackAndFooter("results");
+      });
+    </script>
+  </body>
+</html>

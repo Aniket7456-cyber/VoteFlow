@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="other-dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Login — VoteFlow</title>
+    <link rel="stylesheet" href="shared.css" />
+    <style>
+      .auth-wrap {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5.5rem 1.5rem 2rem;
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+      }
+      .auth-bg {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          ellipse 70% 50% at 50% 0%,
+          rgba(27, 94, 247, 0.12) 0%,
+          transparent 70%
+        );
+      }
+      .auth-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2.2rem;
+        width: 100%;
+        max-width: 440px;
+        position: relative;
+        z-index: 1;
+        animation: slideUp 0.5s ease both;
+        box-shadow: var(--shadow);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toast-container"></div>
+    <nav class="nav">
+      <a href="index.html" class="nav-logo"
+        ><div class="nav-logo-badge">🗳️</div>
+        VoteFlow</a
+      >
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+        <div id="nav-guest-area" style="display: flex; gap: 0.6rem">
+          <a href="register.html" class="nav-btn nav-btn-accent">Register</a>
+        </div>
+        <div id="nav-user-area" class="nav-user" style="display: none">
+          <div class="nav-avatar" id="nav-avatar-letter">U</div>
+          <span id="nav-username-display"></span
+          ><button class="nav-btn nav-btn-ghost btn-sm" onclick="logout()">
+            Logout
+          </button>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+      </div>
+    </nav>
+    <div class="auth-wrap">
+      <div class="auth-bg"></div>
+      <div class="auth-card">
+        <div style="text-align: center; margin-bottom: 1.4rem">
+          <span style="font-size: 2rem">🔐</span>
+        </div>
+        <div
+          style="
+            font-family: var(--font-head);
+            font-size: 1.6rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 0.3rem;
+          "
+        >
+          Welcome Back
+        </div>
+        <div
+          style="
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.88rem;
+            margin-bottom: 1.8rem;
+          "
+        >
+          Login with your username and password
+        </div>
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input
+            type="text"
+            class="form-input"
+            id="l-user"
+            placeholder="Your username"
+            onkeydown="if(event.key==='Enter')doLogin()"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-wrap">
+            <input
+              type="password"
+              class="form-input"
+              id="l-pass"
+              placeholder="Your password"
+              onkeydown="if(event.key==='Enter')doLogin()"
+            />
+            <button
+              class="input-icon"
+              type="button"
+              onclick="togglePass('l-pass',this)"
+            >
+              👁️
+            </button>
+          </div>
+        </div>
+        <button
+          class="btn btn-primary btn-full btn-lg"
+          id="login-btn"
+          onclick="doLogin()"
+        >
+          Login →
+        </button>
+        <div class="divider-or"><span>or</span></div>
+        <a
+          href="voter-login.html"
+          class="btn btn-outline btn-full"
+          style="text-align: center; justify-content: center"
+          >I'm a Voter (use Invitation Code)</a
+        >
+        <p
+          style="
+            text-align: center;
+            margin-top: 1.2rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+          "
+        >
+          No account?
+          <a
+            href="register.html"
+            style="color: var(--primary); font-weight: 700"
+            >Register here</a
+          >
+        </p>
+      </div>
+    </div>
+    <div id="page-footer-slot"></div>
+    <script src="shared.js"></script>
+    <script>
+      function doLogin() {
+        const u = $("l-user").value.trim(),
+          p = $("l-pass").value;
+        if (!u || !p) {
+          showToast("Enter username and password", "error");
+          return;
+        }
+        const btn = $("login-btn");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Logging in...';
+        setTimeout(() => {
+          const user = App.users.find(
+            (x) =>
+              x.username.toLowerCase() === u.toLowerCase() && x.password === p
+          );
+          if (!user) {
+            showToast("Invalid username or password", "error");
+            const card = document.querySelector(".auth-card");
+            card.style.animation = "shake 0.4s ease";
+            setTimeout(() => (card.style.animation = ""), 500);
+            btn.disabled = false;
+            btn.textContent = "Login →";
+            return;
+          }
+          showToast(`Welcome back, ${user.username}! 👋`, "success");
+          saveSession(user);
+          btn.disabled = false;
+          btn.textContent = "Login →";
+          setTimeout(() => (window.location = "dashboard.html"), 800);
+        }, 600);
+      }
+      document.addEventListener("DOMContentLoaded", () => {
+        const u = loadSession();
+        if (u) window.location = "dashboard.html";
+        injectFeedbackAndFooter("login");
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="other-dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Create Election — VoteFlow</title>
+    <link rel="stylesheet" href="shared.css" />
+    <style>
+      .elec-type-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      .type-card {
+        background: var(--bg2);
+        border: 2px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.6rem;
+        cursor: pointer;
+        transition: all 0.25s;
+        text-align: center;
+      }
+      .type-card:hover,
+      .type-card.sel {
+        border-color: var(--accent);
+      }
+      .type-card.sel {
+        background: var(--bg3);
+      }
+      .timing-opts {
+        display: flex;
+        gap: 0.8rem;
+        margin-bottom: 1rem;
+      }
+      .timing-opt {
+        flex: 1;
+        padding: 1rem;
+        border-radius: var(--radius);
+        border: 2px solid var(--border);
+        background: var(--bg2);
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s;
+      }
+      .timing-opt.sel,
+      .timing-opt:hover {
+        border-color: var(--primary);
+        background: var(--bg3);
+      }
+      .p-card {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.2rem;
+        margin-bottom: 0.8rem;
+        position: relative;
+      }
+      .p-photo {
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        border: 2px dashed var(--border);
+        background: var(--bg3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        cursor: pointer;
+        overflow: hidden;
+        flex-shrink: 0;
+        transition: border-color 0.2s;
+      }
+      .p-photo:hover {
+        border-color: var(--primary);
+      }
+      .p-photo img,
+      .p-sym img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: inherit;
+      }
+      .p-sym {
+        width: 46px;
+        height: 46px;
+        border-radius: 8px;
+        border: 2px dashed var(--border);
+        background: var(--bg3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        cursor: pointer;
+        overflow: hidden;
+        flex-shrink: 0;
+        transition: border-color 0.2s;
+      }
+      .p-sym:hover {
+        border-color: var(--accent);
+      }
+      .post-section {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.4rem;
+        margin-bottom: 1rem;
+      }
+      @media (max-width: 480px) {
+        .elec-type-grid,
+        .timing-opts {
+          grid-template-columns: 1fr;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toast-container"></div>
+    <nav class="nav">
+      <a href="index.html" class="nav-logo"
+        ><div class="nav-logo-badge">🗳️</div>
+        VoteFlow</a
+      >
+      <ul class="nav-links">
+        <li><a href="dashboard.html" data-auth>Dashboard</a></li>
+        <li><a href="voter-groups.html" data-auth>Voter Groups</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+        <div id="nav-guest-area" style="display: none"></div>
+        <div id="nav-user-area" class="nav-user" style="display: none">
+          <div class="nav-avatar" id="nav-avatar-letter">U</div>
+          <span id="nav-username-display"></span
+          ><button class="nav-btn nav-btn-ghost btn-sm" onclick="logout()">
+            Logout
+          </button>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+      </div>
+    </nav>
+    <div class="page-wrap">
+      <div class="main-content medium">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+          "
+        >
+          <div>
+            <div class="section-title">Create Election</div>
+            <div style="color: var(--muted); font-size: 0.9rem">
+              Set up a new election for your organisation
+            </div>
+          </div>
+          <a href="dashboard.html" class="btn btn-ghost">← Back</a>
+        </div>
+
+        <div class="card" style="margin-bottom: 1rem">
+          <div class="card-title">📋 Election Type</div>
+          <div class="elec-type-grid">
+            <div
+              class="type-card sel"
+              id="tc-single"
+              onclick="setType('single',this)"
+            >
+              <div style="font-size: 1.8rem; margin-bottom: 0.6rem">🎯</div>
+              <div style="font-weight: 700">Single Post</div>
+              <div style="font-size: 0.82rem; color: var(--muted)">
+                One position, multiple candidates
+              </div>
+            </div>
+            <div
+              class="type-card"
+              id="tc-group"
+              onclick="setType('group',this)"
+            >
+              <div style="font-size: 1.8rem; margin-bottom: 0.6rem">📊</div>
+              <div style="font-weight: 700">Group Post</div>
+              <div style="font-size: 0.82rem; color: var(--muted)">
+                Multiple positions in one election
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 1rem">
+          <div class="card-title">📝 Election Details</div>
+          <div class="form-group">
+            <label class="form-label">Election Title *</label
+            ><input
+              type="text"
+              class="form-input"
+              id="e-title"
+              placeholder="e.g. Student Council Election 2024"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description (Optional)</label
+            ><textarea
+              class="form-input"
+              id="e-desc"
+              placeholder="Brief description..."
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Voter Group *</label>
+            <select class="form-input" id="e-group">
+              <option value="">— Select a voter group —</option>
+            </select>
+            <div style="margin-top: 0.5rem">
+              <a href="voter-groups.html" class="btn btn-ghost btn-sm"
+                >+ Create new group</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <div id="single-section" class="card" style="margin-bottom: 1rem">
+          <div class="card-title">🏆 Post Details</div>
+          <div class="form-group">
+            <label class="form-label">Position / Post Title</label
+            ><input
+              type="text"
+              class="form-input"
+              id="single-post-name"
+              placeholder="e.g. President, Vice President..."
+            />
+          </div>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 0.8rem;
+            "
+          >
+            <div style="font-weight: 700; font-size: 0.9rem">👤 Candidates</div>
+            <button
+              class="btn btn-ghost btn-sm"
+              onclick="addCand('single-cands','p0')"
+            >
+              + Add Candidate
+            </button>
+          </div>
+          <div id="single-cands"></div>
+        </div>
+
+        <div id="group-section" style="display: none">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 0.8rem;
+            "
+          >
+            <div style="font-weight: 700; font-size: 1rem">Posts</div>
+            <button class="btn btn-ghost btn-sm" onclick="addPost()">
+              + Add Post
+            </button>
+          </div>
+          <div id="group-posts"></div>
+        </div>
+
+        <div class="card" style="margin-bottom: 1rem">
+          <div class="card-title">⏰ Election Timing</div>
+          <div class="timing-opts">
+            <div
+              class="timing-opt sel"
+              id="to-sched"
+              onclick="setTiming('scheduled',this)"
+            >
+              <div style="font-size: 1.3rem; margin-bottom: 0.3rem">📅</div>
+              <div style="font-weight: 700; font-size: 0.88rem">Scheduled</div>
+              <div style="font-size: 0.78rem; color: var(--muted)">
+                Set start & end time
+              </div>
+            </div>
+            <div class="timing-opt" id="to-now" onclick="setTiming('now',this)">
+              <div style="font-size: 1.3rem; margin-bottom: 0.3rem">▶️</div>
+              <div style="font-weight: 700; font-size: 0.88rem">Start Now</div>
+              <div style="font-size: 0.78rem; color: var(--muted)">
+                Begin immediately
+              </div>
+            </div>
+          </div>
+          <div id="sched-fields">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Start Date & Time</label
+                ><input type="datetime-local" class="form-input" id="e-start" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">End Date & Time</label
+                ><input type="datetime-local" class="form-input" id="e-end" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button
+          class="btn btn-primary btn-full btn-lg"
+          id="create-btn"
+          onclick="createElection()"
+        >
+          🚀 Launch Election
+        </button>
+      </div>
+    </div>
+    <div id="page-footer-slot"></div>
+    <script src="shared.js"></script>
+    <script>
+      let eType = "single",
+        eTiming = "scheduled",
+        _cc = {},
+        _gpc = 0;
+
+      function setType(t, el) {
+        eType = t;
+        document
+          .querySelectorAll(".type-card")
+          .forEach((c) => c.classList.remove("sel"));
+        el.classList.add("sel");
+        $("single-section").style.display = t === "single" ? "block" : "none";
+        $("group-section").style.display = t === "group" ? "block" : "none";
+        if (t === "group" && !$("group-posts").children.length) addPost();
+      }
+      function setTiming(t, el) {
+        eTiming = t;
+        document
+          .querySelectorAll(".timing-opt")
+          .forEach((o) => o.classList.remove("sel"));
+        el.classList.add("sel");
+        $("sched-fields").style.display = t === "scheduled" ? "block" : "none";
+      }
+
+      function addCand(containerId, postKey) {
+        if (!_cc[postKey]) _cc[postKey] = 0;
+        const idx = _cc[postKey]++,
+          cid = `c-${postKey}-${idx}`;
+        const div = document.createElement("div");
+        div.className = "p-card";
+        div.id = cid;
+        div.innerHTML = `<button style="position:absolute;top:0.8rem;right:0.8rem;width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--error);font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="$('${cid}').remove()">✕</button>
+    <div style="display:flex;gap:1rem;align-items:flex-start">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0.3rem">
+        <div class="p-photo" onclick="$('${cid}-ph').click()" id="${cid}-photo-el">📷<input type="file" id="${cid}-ph" style="display:none" accept="image/*" onchange="previewImg(this,'${cid}-photo-el','${cid}-pd')"/><input type="hidden" id="${cid}-pd"/></div>
+        <span style="font-size:0.7rem;color:var(--muted)">Photo</span>
+      </div>
+      <div style="flex:1">
+        <div class="form-group" style="margin-bottom:0.6rem"><input type="text" class="form-input" placeholder="Candidate Name *" data-field="name"/></div>
+        <div class="form-group" style="margin-bottom:0"><input type="text" class="form-input" placeholder="Party / Tagline (optional)" data-field="party"/></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0.3rem">
+        <div class="p-sym" onclick="$('${cid}-sy').click()" id="${cid}-sym-el">🏳️<input type="file" id="${cid}-sy" style="display:none" accept="image/*" onchange="previewImg(this,'${cid}-sym-el','${cid}-sd')"/><input type="hidden" id="${cid}-sd"/></div>
+        <span style="font-size:0.7rem;color:var(--muted)">Symbol</span>
+      </div>
+    </div>`;
+        document.getElementById(containerId).appendChild(div);
+      }
+      function previewImg(input, elId, dataId) {
+        if (!input.files[0] || input.files[0].size > 2 * 1024 * 1024) {
+          showToast("Image must be under 2MB", "warn");
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const el = $(elId);
+          if (!el) return;
+          const prev = el.querySelector("img");
+          if (prev) prev.remove();
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          img.style.cssText =
+            "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit";
+          el.style.position = "relative";
+          el.appendChild(img);
+          const hid = $(dataId);
+          if (hid) hid.value = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+      function collectCands(containerId) {
+        const cont = document.getElementById(containerId);
+        if (!cont) return [];
+        return Array.from(cont.querySelectorAll(".p-card"))
+          .map((card, i) => ({
+            id: i,
+            name: (
+              card.querySelector('[data-field="name"]')?.value || ""
+            ).trim(),
+            party: (
+              card.querySelector('[data-field="party"]')?.value || ""
+            ).trim(),
+            photo:
+              card.querySelector('[type=hidden][id$="-pd"]')?.value || null,
+            symbol:
+              card.querySelector('[type=hidden][id$="-sd"]')?.value || null,
+            votes: 0,
+          }))
+          .filter((c) => c.name);
+      }
+      let _gpc2 = 0;
+      function addPost() {
+        const pid = "gp-" + _gpc2++;
+        const sec = document.createElement("div");
+        sec.className = "post-section";
+        sec.id = pid;
+        sec.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem"><div style="font-weight:700">Post ${_gpc2}</div><button class="btn btn-danger btn-sm" onclick="$('${pid}').remove()">Remove</button></div>
+    <div class="form-group"><label class="form-label">Post Title *</label><input type="text" class="form-input" placeholder="e.g. President" data-field="postname"/></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem"><div style="font-weight:700;font-size:0.9rem">Candidates</div><button class="btn btn-ghost btn-sm" onclick="addCand('${pid}-cands','${pid}')">+ Add</button></div>
+    <div id="${pid}-cands"></div>`;
+        $("group-posts").appendChild(sec);
+        addCand(pid + "-cands", pid);
+      }
+
+      function createElection() {
+        const title = $("e-title").value.trim(),
+          gid = $("e-group").value;
+        if (!title) {
+          showToast("Election title required", "error");
+          return;
+        }
+        if (!gid) {
+          showToast("Please select a voter group", "error");
+          return;
+        }
+        let posts = [];
+        if (eType === "single") {
+          const pname =
+            $("single-post-name").value.trim() || "General Election";
+          const cands = collectCands("single-cands");
+          if (!cands.length) {
+            showToast("Add at least one candidate", "error");
+            return;
+          }
+          posts = [{ id: "post-0", name: pname, candidates: cands }];
+        } else {
+          document
+            .querySelectorAll("#group-posts .post-section")
+            .forEach((sec, i) => {
+              const pname =
+                sec.querySelector('[data-field="postname"]')?.value.trim() ||
+                `Post ${i + 1}`;
+              const cands = collectCands(sec.id + "-cands");
+              if (cands.length)
+                posts.push({ id: "post-" + i, name: pname, candidates: cands });
+            });
+          if (!posts.length) {
+            showToast("Add at least one post with candidates", "error");
+            return;
+          }
+        }
+        const now = new Date();
+        let status = "upcoming",
+          startTime = null,
+          endTime = null;
+        if (eTiming === "now") {
+          status = "live";
+          startTime = now.toISOString();
+        } else {
+          startTime = $("e-start").value;
+          endTime = $("e-end").value;
+          if (!startTime || !endTime) {
+            showToast("Set start and end times", "error");
+            return;
+          }
+          if (new Date(endTime) <= new Date(startTime)) {
+            showToast("End time must be after start time", "error");
+            return;
+          }
+          status = new Date(startTime) <= now ? "live" : "upcoming";
+        }
+        const election = {
+          id: "elec-" + Date.now(),
+          userId: App.currentUser.id,
+          title,
+          description: $("e-desc").value.trim(),
+          type: eType,
+          posts,
+          voterGroupId: gid,
+          timingType: eTiming,
+          startTime,
+          endTime,
+          status,
+          createdAt: now.toISOString(),
+        };
+        const btn = $("create-btn");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Creating...';
+        setTimeout(() => {
+          App.elections.push(election);
+          Store.save({ elections: App.elections });
+          showToast("Election created! 🚀", "success", 3000);
+          btn.disabled = false;
+          btn.textContent = "🚀 Launch Election";
+          setTimeout(() => (window.location = "dashboard.html"), 1000);
+        }, 700);
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const user = requireAuth();
+        if (!user) return;
+        App.currentUser = user;
+        addCand("single-cands", "p0");
+        const groups = App.voterGroups.filter((g) => g.userId === user.id);
+        $("e-group").innerHTML =
+          '<option value="">— Select a voter group —</option>' +
+          groups
+            .map(
+              (g) =>
+                `<option value="${g.id}">${esc(g.name)} (${
+                  g.voters.length
+                } voters)</option>`
+            )
+            .join("");
+        const now = new Date(),
+          end = new Date(now.getTime() + 3600000);
+        $("e-start").value = now.toISOString().slice(0, 16);
+        $("e-end").value = end.toISOString().slice(0, 16);
+        injectFeedbackAndFooter("create-election");
+      });
+    </script>
+  </body>
+</html>

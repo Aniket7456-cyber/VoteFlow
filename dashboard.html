@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="other-dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Dashboard — VoteFlow</title>
+    <link rel="stylesheet" href="shared.css" />
+    <style>
+      .dash-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .dash-stat {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.4rem;
+        transition: transform 0.2s;
+      }
+      .dash-stat:hover {
+        transform: translateY(-2px);
+      }
+      .ds-num {
+        font-family: var(--font-head);
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .ds-label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 0.2rem;
+      }
+      .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .qa-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.25s;
+        text-align: center;
+        text-decoration: none;
+        color: var(--text);
+        display: block;
+      }
+      .qa-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-3px);
+        box-shadow: var(--shadow);
+      }
+      .qa-icon {
+        font-size: 1.8rem;
+        margin-bottom: 0.8rem;
+      }
+      .election-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.4rem;
+        margin-bottom: 0.9rem;
+        transition: all 0.2s;
+      }
+      .election-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow);
+      }
+      .election-card-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toast-container"></div>
+    <nav class="nav">
+      <a href="index.html" class="nav-logo"
+        ><div class="nav-logo-badge">🗳️</div>
+        VoteFlow</a
+      >
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="dashboard.html" class="active" data-auth>Dashboard</a></li>
+        <li><a href="voter-groups.html" data-auth>Voter Groups</a></li>
+        <li><a href="history.html" data-auth>History</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+        <div id="nav-guest-area" style="display: none"></div>
+        <div id="nav-user-area" class="nav-user" style="display: none">
+          <div class="nav-avatar" id="nav-avatar-letter">U</div>
+          <span id="nav-username-display"></span>
+          <button class="nav-btn nav-btn-ghost btn-sm" onclick="logout()">
+            Logout
+          </button>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+      </div>
+    </nav>
+    <div class="page-wrap">
+      <div class="main-content">
+        <div
+          style="
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+          "
+        >
+          <div>
+            <div class="section-title" id="dash-welcome">Welcome back!</div>
+            <div style="color: var(--muted); font-size: 0.9rem">
+              Manage your elections from here
+            </div>
+          </div>
+          <a href="create-election.html" class="btn btn-primary"
+            >+ New Election</a
+          >
+        </div>
+        <div class="dash-stat-grid">
+          <div class="dash-stat">
+            <div style="font-size: 1.4rem; margin-bottom: 0.5rem">🗳️</div>
+            <div class="ds-num" id="stat-total">0</div>
+            <div class="ds-label">Total Elections</div>
+          </div>
+          <div class="dash-stat">
+            <div style="font-size: 1.4rem; margin-bottom: 0.5rem">▶️</div>
+            <div class="ds-num" id="stat-live">0</div>
+            <div class="ds-label">Live Now</div>
+          </div>
+          <div class="dash-stat">
+            <div style="font-size: 1.4rem; margin-bottom: 0.5rem">✅</div>
+            <div class="ds-num" id="stat-done">0</div>
+            <div class="ds-label">Completed</div>
+          </div>
+          <div class="dash-stat">
+            <div style="font-size: 1.4rem; margin-bottom: 0.5rem">👥</div>
+            <div class="ds-num" id="stat-voters">0</div>
+            <div class="ds-label">Total Voters</div>
+          </div>
+        </div>
+        <div class="quick-actions">
+          <a href="create-election.html" class="qa-card"
+            ><div class="qa-icon">🗳️</div>
+            <div style="font-weight: 700; margin-bottom: 0.3rem">
+              Create Election
+            </div>
+            <div style="font-size: 0.82rem; color: var(--muted)">
+              Single or group post
+            </div></a
+          >
+          <a href="voter-groups.html" class="qa-card"
+            ><div class="qa-icon">👥</div>
+            <div style="font-weight: 700; margin-bottom: 0.3rem">
+              Voter Groups
+            </div>
+            <div style="font-size: 0.82rem; color: var(--muted)">
+              Import Excel / PDF
+            </div></a
+          >
+          <a href="history.html" class="qa-card"
+            ><div class="qa-icon">📜</div>
+            <div style="font-weight: 700; margin-bottom: 0.3rem">History</div>
+            <div style="font-size: 0.82rem; color: var(--muted)">
+              Past elections
+            </div></a
+          >
+        </div>
+        <div class="card">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 1rem;
+              flex-wrap: wrap;
+              gap: 0.5rem;
+            "
+          >
+            <div class="card-title" style="margin: 0">Your Elections</div>
+            <div class="tabs" style="margin: 0">
+              <button class="tab-btn active" onclick="filterE('all',this)">
+                All
+              </button>
+              <button class="tab-btn" onclick="filterE('live',this)">
+                Live
+              </button>
+              <button class="tab-btn" onclick="filterE('upcoming',this)">
+                Upcoming
+              </button>
+              <button class="tab-btn" onclick="filterE('ended',this)">
+                Ended
+              </button>
+            </div>
+          </div>
+          <div id="elections-list"></div>
+        </div>
+      </div>
+    </div>
+    <div id="page-footer-slot"></div>
+    <script src="shared.js"></script>
+    <script>
+      function renderDash() {
+        checkElectionTimers();
+        const user = App.currentUser;
+        if (!user) return;
+        const ue = App.elections.filter((e) => e.userId === user.id);
+        $("dash-welcome").textContent = `Welcome back, ${user.username}! 👋`;
+        $("stat-total").textContent = ue.length;
+        $("stat-live").textContent = ue.filter(
+          (e) => e.status === "live"
+        ).length;
+        $("stat-done").textContent = ue.filter(
+          (e) => e.status === "ended"
+        ).length;
+        $("stat-voters").textContent = App.voterGroups
+          .filter((g) => g.userId === user.id)
+          .reduce((s, g) => s + g.voters.length, 0);
+        renderList(ue, "all");
+      }
+      function renderList(elections, filter) {
+        const cont = $("elections-list");
+        let list = elections;
+        if (filter === "live")
+          list = elections.filter((e) => e.status === "live");
+        else if (filter === "upcoming")
+          list = elections.filter((e) => e.status === "upcoming");
+        else if (filter === "ended")
+          list = elections.filter((e) => e.status === "ended");
+        list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        if (!list.length) {
+          cont.innerHTML =
+            '<div class="empty-state"><span class="empty-icon">🗳️</span><h3>No elections yet</h3><p>Create your first election to get started</p></div>';
+          return;
+        }
+        const sc = {
+          live: "badge-success",
+          upcoming: "badge-warn",
+          ended: "badge-muted",
+        };
+        const si = { live: "🟢", upcoming: "⏳", ended: "✅" };
+        cont.innerHTML = list
+          .map((e) => {
+            const votes = App.votes.filter((v) => v.electionId === e.id).length;
+            const grp = App.voterGroups.find((g) => g.id === e.voterGroupId);
+            const total = grp ? grp.voters.length : 0;
+            const pct = total ? Math.round((votes / total) * 100) : 0;
+            return `<div class="election-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+        <div style="flex:1">
+          <div style="font-family:var(--font-head);font-size:1.05rem;font-weight:700;margin-bottom:0.35rem">${esc(
+            e.title
+          )}</div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.4rem">
+            <span class="badge ${sc[e.status] || "badge-muted"}">${
+              si[e.status] || "•"
+            } ${e.status}</span>
+            <span class="badge badge-primary">${
+              e.type === "single" ? "Single Post" : "Group Post"
+            }</span>
+            ${
+              e.status === "live"
+                ? `<span class="badge badge-muted">${votes}/${total} voted (${pct}%)</span>`
+                : ""
+            }
+          </div>
+          ${
+            e.status === "live"
+              ? `<div class="progress-bar" style="margin-bottom:0.4rem"><div class="progress-fill" style="width:${pct}%"></div></div>`
+              : ""
+          }
+          <div style="font-size:0.8rem;color:var(--muted)">${
+            e.posts?.length || 1
+          } post${
+              (e.posts?.length || 1) > 1 ? "s" : ""
+            } · ${total} voters · ${new Date(
+              e.createdAt
+            ).toLocaleDateString()}</div>
+        </div>
+        <div style="font-size:0.8rem;color:var(--muted)">${new Date(
+          e.createdAt
+        ).toLocaleDateString()}</div>
+      </div>
+      <div class="election-card-actions">
+        ${
+          e.status === "live"
+            ? `<button class="btn btn-success btn-sm" onclick="goResults('${e.id}')">📊 Live Results</button><button class="btn btn-danger btn-sm" onclick="endEl('${e.id}')">⏹ End</button>`
+            : ""
+        }
+        ${
+          e.status === "ended"
+            ? `<button class="btn btn-ghost btn-sm" onclick="goResults('${e.id}')">📊 Results</button><button class="btn btn-primary btn-sm" onclick="exportPDF('${e.id}')">📄 PDF</button>`
+            : ""
+        }
+        ${
+          e.status === "upcoming"
+            ? `<button class="btn btn-primary btn-sm" onclick="startNow('${e.id}')">▶️ Start Now</button>`
+            : ""
+        }
+      </div>
+    </div>`;
+          })
+          .join("");
+      }
+      function filterE(f, btn) {
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderList(
+          App.elections.filter((e) => e.userId === App.currentUser?.id),
+          f
+        );
+      }
+      function startNow(id) {
+        const e = App.elections.find((x) => x.id === id);
+        if (!e) return;
+        e.status = "live";
+        e.startTime = new Date().toISOString();
+        e.timingType = "manual";
+        Store.save({ elections: App.elections });
+        showToast("Election started! ▶️", "success");
+        renderDash();
+      }
+      function endEl(id) {
+        const e = App.elections.find((x) => x.id === id);
+        if (!e || !confirm(`End "${e.title}"?`)) return;
+        e.status = "ended";
+        e.endedAt = new Date().toISOString();
+        Store.save({ elections: App.elections });
+        showToast("Election ended", "success");
+        renderDash();
+      }
+      function goResults(id) {
+        sessionStorage.setItem("vf_view_election", id);
+        window.location = "results.html";
+      }
+      function exportPDF(id) {
+        const e = App.elections.find((x) => x.id === id);
+        if (!e) return;
+        const grp = App.voterGroups.find((g) => g.id === e.voterGroupId);
+        const total = grp ? grp.voters.length : 0,
+          voted = App.votes.filter((v) => v.electionId === id).length;
+        const lines = [
+          "VoteFlow Official Election Result",
+          "Developer: Aniket Shrivastava | workwithaniket7456@gmail.com",
+          "=".repeat(50),
+          "",
+          `Election: ${e.title}`,
+          `Status: ${e.status}`,
+          `Participation: ${voted}/${total}`,
+          "",
+          ...e.posts.flatMap((p) => {
+            const tv = p.candidates.reduce((s, c) => s + (c.votes || 0), 0);
+            const w = p.candidates.reduce(
+              (a, b) => ((b.votes || 0) > (a.votes || 0) ? b : a),
+              p.candidates[0]
+            );
+            return [
+              `POST: ${p.name}`,
+              `Winner: ${w?.name || "N/A"}`,
+              ...p.candidates.map(
+                (c) =>
+                  `  ${c.name.padEnd(22)}${c.votes || 0} votes (${
+                    tv ? Math.round(((c.votes || 0) / tv) * 100) : 0
+                  }%)`
+              ),
+              "",
+            ];
+          }),
+          "=".repeat(50),
+          `Generated: ${new Date().toLocaleString()}`,
+        ];
+        const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `VoteFlow_${e.title.replace(/\s+/g, "_")}.txt`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showToast("Result report downloaded! 📄", "success");
+      }
+      document.addEventListener("DOMContentLoaded", () => {
+        const user = requireAuth();
+        if (!user) return;
+        App.currentUser = user;
+        renderDash();
+        injectFeedbackAndFooter("dashboard");
+      });
+    </script>
+  </body>
+</html>

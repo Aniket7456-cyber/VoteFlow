@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="other-dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>VoteFlow — Online Election Platform</title>
+    <link rel="stylesheet" href="shared.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <style>
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 6rem 1.5rem 3rem;
+        position: relative;
+        overflow: hidden;
+      }
+      .hero-bg {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+      }
+      .hero-gradient {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+            ellipse 90% 60% at 50% -5%,
+            rgba(27, 94, 247, 0.22) 0%,
+            transparent 70%
+          ),
+          radial-gradient(
+            ellipse 50% 40% at 80% 80%,
+            rgba(246, 201, 14, 0.08) 0%,
+            transparent 60%
+          );
+      }
+      [data-theme*="light"] .hero-gradient {
+        background: radial-gradient(
+          ellipse 90% 60% at 50% -5%,
+          rgba(27, 94, 247, 0.1) 0%,
+          transparent 70%
+        );
+      }
+      .hero-grid {
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(var(--border) 1px, transparent 1px),
+          linear-gradient(90deg, var(--border) 1px, transparent 1px);
+        background-size: 50px 50px;
+        mask-image: radial-gradient(
+          ellipse at center,
+          black 20%,
+          transparent 70%
+        );
+      }
+      .hero-content {
+        position: relative;
+        z-index: 1;
+        max-width: 700px;
+      }
+      .hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.38rem 1rem;
+        background: rgba(246, 201, 14, 0.1);
+        border: 1px solid rgba(246, 201, 14, 0.3);
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 1.8rem;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        animation: slideUp 0.5s ease both;
+      }
+      .hero h1 {
+        font-family: var(--font-head);
+        font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+        line-height: 1.15;
+        margin-bottom: 1.2rem;
+        font-weight: 700;
+        animation: slideUp 0.5s 0.1s ease both;
+      }
+      .hero h1 em {
+        font-style: italic;
+        color: var(--accent);
+      }
+      .hero p {
+        color: var(--muted);
+        font-size: 1.05rem;
+        line-height: 1.75;
+        margin-bottom: 2rem;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+        animation: slideUp 0.5s 0.2s ease both;
+      }
+      .hero-btns {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        animation: slideUp 0.5s 0.3s ease both;
+      }
+      .hero-stats {
+        display: flex;
+        gap: 2.5rem;
+        justify-content: center;
+        margin-top: 3.5rem;
+        flex-wrap: wrap;
+        animation: slideUp 0.5s 0.4s ease both;
+      }
+      .hero-stat-num {
+        font-family: var(--font-head);
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .hero-stat-label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 0.15rem;
+      }
+      .features {
+        padding: 5rem 1.5rem;
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.2rem;
+        margin-top: 2.5rem;
+      }
+      .feat-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        transition: all 0.25s;
+        animation: fadeIn 0.5s ease both;
+      }
+      .feat-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-4px);
+        box-shadow: var(--shadow);
+      }
+      .feat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+      }
+      .feat-card h3 {
+        font-size: 0.97rem;
+        font-weight: 700;
+        margin-bottom: 0.4rem;
+      }
+      .feat-card p {
+        color: var(--muted);
+        font-size: 0.85rem;
+        line-height: 1.6;
+      }
+      .how {
+        padding: 4rem 1.5rem;
+        max-width: 1100px;
+        margin: 0 auto;
+        text-align: center;
+      }
+      .how-steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+      }
+      .how-step {
+        padding: 1.5rem;
+      }
+      .step-num {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--primary2));
+        color: #fff;
+        font-family: var(--font-head);
+        font-size: 1.3rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        box-shadow: 0 4px 16px rgba(27, 94, 247, 0.35);
+      }
+      .how-step h4 {
+        font-weight: 700;
+        margin-bottom: 0.4rem;
+      }
+      .how-step p {
+        color: var(--muted);
+        font-size: 0.85rem;
+        line-height: 1.6;
+      }
+      .cta-banner {
+        margin: 2rem 1.5rem 4rem;
+        max-width: 1100px;
+        margin-left: auto;
+        margin-right: auto;
+        background: linear-gradient(135deg, var(--primary), var(--primary2));
+        border-radius: var(--radius-lg);
+        padding: 3rem 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .cta-banner::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      }
+      .cta-banner h2 {
+        font-family: var(--font-head);
+        font-size: 1.8rem;
+        color: #fff;
+        margin-bottom: 0.6rem;
+        position: relative;
+      }
+      .cta-banner p {
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 1.5rem;
+        position: relative;
+      }
+      .cta-banner .btn {
+        position: relative;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toast-container"></div>
+
+    <nav class="nav">
+      <a href="index.html" class="nav-logo"
+        ><div class="nav-logo-badge">🗳️</div>
+        VoteFlow</a
+      >
+      <ul class="nav-links">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li>
+          <a href="dashboard.html" data-auth style="display: none">Dashboard</a>
+        </li>
+        <li>
+          <a href="history.html" data-auth style="display: none">History</a>
+        </li>
+        <li><a href="feedback.html">Feedback</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+        <div id="nav-guest-area" style="display: flex; gap: 0.6rem">
+          <a href="login.html" class="nav-btn nav-btn-ghost">Login</a>
+          <a href="register.html" class="nav-btn nav-btn-accent">Register</a>
+        </div>
+        <div id="nav-user-area" class="nav-user" style="display: none">
+          <div class="nav-avatar" id="nav-avatar-letter">U</div>
+          <span id="nav-username-display"></span>
+          <button class="nav-btn nav-btn-ghost btn-sm" onclick="logout()">
+            Logout
+          </button>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div class="hero-bg">
+        <div class="hero-gradient"></div>
+        <div class="hero-grid"></div>
+      </div>
+      <div class="hero-content">
+        <div class="hero-eyebrow">⚡ Trusted Election Platform</div>
+        <h1>Conduct <em>Fair Elections</em><br />Online with Ease</h1>
+        <p>
+          VoteFlow makes it simple to create, manage, and monitor elections for
+          schools, universities, and organizations — with real-time results and
+          secure voting.
+        </p>
+        <div class="hero-btns">
+          <a href="register.html" class="btn btn-primary btn-lg"
+            >Get Started Free</a
+          >
+          <a href="voter-login.html" class="btn btn-outline btn-lg"
+            >I'm a Voter →</a
+          >
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-num">100%</div>
+            <div class="hero-stat-label">Secure Voting</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num">Live</div>
+            <div class="hero-stat-label">Results Dashboard</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num">Auto</div>
+            <div class="hero-stat-label">Invitation Codes</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num">PDF</div>
+            <div class="hero-stat-label">Result Export</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="features">
+      <div
+        style="text-align: center; margin-bottom: 0.5rem"
+        class="section-title"
+      >
+        Everything You Need
+      </div>
+      <div style="text-align: center; color: var(--muted); font-size: 0.93rem">
+        A complete election management suite for modern organizations
+      </div>
+      <div class="features-grid">
+        <div class="feat-card">
+          <div class="feat-icon" style="background: rgba(27, 94, 247, 0.15)">
+            🗳️
+          </div>
+          <h3>Easy Election Setup</h3>
+          <p>
+            Create single-post or group elections in minutes with candidate
+            photos, symbols, and flexible timing.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="background: rgba(34, 197, 94, 0.15)">
+            🔒
+          </div>
+          <h3>Invite-Only Voting</h3>
+          <p>
+            Voters join with unique invitation codes — auto-generated from name,
+            phone and class.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="background: rgba(246, 201, 14, 0.12)">
+            📊
+          </div>
+          <h3>Live Results</h3>
+          <p>
+            Watch votes come in real-time with beautiful charts. Know who's
+            winning as it happens.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="background: rgba(239, 68, 68, 0.12)">
+            📤
+          </div>
+          <h3>Excel / PDF Import</h3>
+          <p>
+            Upload your voter list as Excel or PDF — names, phones and codes are
+            extracted automatically.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="background: rgba(139, 92, 246, 0.15)">
+            📄
+          </div>
+          <h3>PDF Results</h3>
+          <p>
+            Generate official result reports and have them auto-sent to your
+            email when the election ends.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="background: rgba(27, 94, 247, 0.15)">
+            📜
+          </div>
+          <h3>Full History</h3>
+          <p>
+            Access complete records of all past elections, voter participation,
+            and final outcomes anytime.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="how">
+      <div class="section-title">How It Works</div>
+      <div style="color: var(--muted); font-size: 0.93rem; margin-top: 0.3rem">
+        Three simple steps to run your election
+      </div>
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="step-num">1</div>
+          <h4>Create Your Election</h4>
+          <p>
+            Set up candidates, timing, and voter groups. Upload Excel/PDF to add
+            voters in bulk.
+          </p>
+        </div>
+        <div class="how-step">
+          <div class="step-num">2</div>
+          <h4>Voters Join</h4>
+          <p>
+            Share invitation codes — voters log in and cast their ballot
+            securely, one post at a time.
+          </p>
+        </div>
+        <div class="how-step">
+          <div class="step-num">3</div>
+          <h4>See Results Live</h4>
+          <p>
+            Monitor votes in real-time, end the election, and export the
+            official PDF report.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div style="padding: 0 1.5rem; max-width: 1100px; margin: 0 auto 4rem">
+      <div class="cta-banner">
+        <h2>Ready to run your first election?</h2>
+        <p>
+          Free to use. No credit card required. Setup takes under 5 minutes.
+        </p>
+        <div
+          style="
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+          "
+        >
+          <a href="register.html" class="btn btn-accent btn-lg"
+            >Create Free Account</a
+          >
+          <a
+            href="voter-login.html"
+            class="btn btn-outline btn-lg"
+            style="border-color: rgba(255, 255, 255, 0.3); color: #fff"
+            >Enter as Voter</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <div id="page-footer-slot"></div>
+
+    <script src="shared.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () =>
+        injectFeedbackAndFooter("home")
+      );
+    </script>
+  </body>
+</html>
